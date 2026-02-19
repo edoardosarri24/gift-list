@@ -1,6 +1,5 @@
 \chapter{Backend}
-\label{chap:backend}
-The backend of the Gift List application is designed to be robust, scalable, and secure. Based on the requirements for real-time interactivity and concurrent access, we have selected a \textbf{Node.js} environment. Node.js is an excellent choice for this application due to its event-driven, non-blocking I/O model, which efficiently handles multiple simultaneous connections—critical for when guests are viewing and claiming gifts at the same time.
+The backend of the Gift List application is designed to be robust, scalable, and secure. Based on the requirements for real-time interactivity and concurrent access, we have selected a Node.js environment. Node.js is an excellent choice for this application due to its event-driven, non-blocking I/O model, which efficiently handles multiple simultaneous connections—critical for when guests are viewing and claiming gifts at the same time.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Technology Stack}
@@ -53,20 +52,20 @@ The application is configured using environment variables. These variables are e
 \section{Data Model}
 The database schema is designed to support the relationships between Celebrants, Lists, and Guests.
 \begin{itemize}
-    \item \textbf{User (Celebrant)}: Stores celebrant data.
+    \item User (Celebrant): Stores celebrant data.
         \begin{itemize}
             \item \texttt{id}: UUID, Primary Key
             \item \texttt{email}: String, unique, required
             \item \texttt{password}: String, hashed, required
         \end{itemize}
-    \item \textbf{GiftList}: Represents a specific event's wish list.
+    \item GiftList: Represents a specific event's wish list.
         \begin{itemize}
             \item \texttt{id}: UUID, Primary Key
             \item \texttt{userId}: Foreign Key to User
             \item \texttt{slug}: String, unique. Automatically generated from the name.
             \item \texttt{name}: String, required
         \end{itemize}
-    \item \textbf{GiftItem}: Represents an individual gift.
+    \item GiftItem: Represents an individual gift.
         \begin{itemize}
             \item \texttt{id}: UUID, Primary Key
             \item \texttt{listId}: Foreign Key to GiftList
@@ -76,14 +75,14 @@ The database schema is designed to support the relationships between Celebrants,
             \item \texttt{status}: Enum (\texttt{AVAILABLE}, \texttt{CLAIMED}), required, default: \texttt{AVAILABLE}
             \item \texttt{preference}: Enum (\texttt{LOW}, \texttt{MEDIUM}, \texttt{HIGH}), required, default: \texttt{MEDIUM}
         \end{itemize}
-    \item \textbf{GuestAccess}: Links a guest's email to a specific list for notification purposes.
+    \item GuestAccess: Links a guest's email to a specific list for notification purposes.
         \begin{itemize}
             \item \texttt{id}: UUID, Primary Key
             \item \texttt{listId}: Foreign Key to GiftList
             \item \texttt{email}: String, required
             \item A unique constraint should be on \texttt{(listId, email)}.
         \end{itemize}
-    \item \textbf{GuestClaim}: A record linking a \texttt{GiftItem} to a \texttt{GuestAccess} record.
+    \item GuestClaim: A record linking a \texttt{GiftItem} to a \texttt{GuestAccess} record.
         \begin{itemize}
             \item \texttt{itemId}: Foreign Key to GiftItem, Primary Key (ensures an item is claimed only once)
             \item \texttt{guestId}: Foreign Key to GuestAccess

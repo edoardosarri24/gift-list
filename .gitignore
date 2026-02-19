@@ -1,5 +1,7 @@
 documentation/build/
 documentation/main.pdf
+documentation/.DS_Store
 documentation/images/**/*.pdf
+documentation/images/.DS_Store
 .VS_Store
 .vscode/

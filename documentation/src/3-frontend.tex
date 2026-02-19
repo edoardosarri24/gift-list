@@ -1,2 +1,174 @@
 \chapter{Frontend}
-\label{chap:frontend}
+This chapter details the architectural decisions and technical specifications for the client-side application of the "Gift List" project. The frontend serves as the primary interface for both Celebrants (to manage lists) and Guests (to view and claim gifts).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Technology Stack}
+The frontend will be built as a Single Page Application (SPA) using the following core technologies:
+\begin{itemize}
+    \item Framework \\
+        React (v19 or latest stable).
+    \item Language \\
+        TypeScript. To ensure type safety and align with the backend data models.
+    \item Build Tool \\
+        Vite. Chosen for its superior performance and rapid development cycle compared to legacy tools like Webpack.
+    \item Routing \\
+        React Router (v7). To manage navigation between the public guest views and the private celebrant dashboard.
+    \item State Management \\
+    \begin{itemize}
+        \item \textit{Server State:} TanStack Query (React Query) or SWR. To handle data fetching, caching, and synchronization with the backend, which is critical for real-time claim updates.
+        \item \textit{Client State:} React Context API or Zustand for global UI state (e.g., theme, user session).
+    \end{itemize}
+    \item Styling \\
+        CSS Modules with Vanilla CSS. This ensures component-scoped styling without the performance overhead or complexity of CSS-in-JS libraries or utility-first frameworks, keeping the codebase standard and portable.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Browser Compatibility}
+To ensure a consistent and secure user experience, the application restricts access based on browser capabilities.
+
+\subsection{Unsupported Browsers Policy}
+The frontend application includes a strict check for browser compatibility during the initialization phase.
+\begin{itemize}
+    \item Detection Mechanism \\
+        The application detects the user's browser version and capabilities (e.g., support for ES6+ features, CSS Grid, Flexbox) before rendering the main application logic.
+    \item Handling Unsupported Environments \\
+        If an unsupported browser or a legacy version is detected (e.g., Internet Explorer), the application will:
+    \begin{enumerate}
+        \item Halt Execution: React will not mount the root component to prevent runtime errors or visual artifacts.
+        \item Display Error Message: A full-screen, user-friendly error message will be shown, informing the user that their browser is not supported and recommending an update to a modern browser (Chrome, Firefox, Safari, Edge).
+    \end{enumerate}
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Architectural Decision Records}
+A key requirement for this project is the future expansion into a native mobile application. This requirement significantly influenced the choice of the frontend framework.
+
+\subsection{Why React?}
+React was selected as the optimal choice for a "Web-First, Mobile-Second" strategy.
+\begin{itemize}
+    \item Web Performance \\
+        The primary use case involves Guests accessing lists via shared links. React, combined with Vite, offers a lightweight bundle and fast "Time-to-Interactive", which is crucial for reducing bounce rates on mobile browsers.
+    \item Code Reusability \\
+        By using TypeScript, we can share data types and validation logic directly between the Backend (Node.js) and Frontend. Furthermore, the business logic encapsulated in Custom Hooks (e.g., \texttt{useClaimGift}) can be reused almost entirely in a future React Native application.
+    \item Ecosystem \\
+        The React ecosystem is vast, providing robust solutions for every requirement (forms, animations, accessibility) without the need to reinvent the wheel.
+\end{itemize}
+
+\subsection{Comparison with Alternatives}
+We evaluated two major alternatives before selecting React.
+
+\subsubsection{React vs. Flutter (Dart)}
+Flutter is a powerful toolkit for building natively compiled applications, but it was deemed less suitable for this specific project:
+\begin{itemize}
+    \item Web "Heaviness" \\
+        Flutter for Web renders the UI on a canvas (or via heavy DOM manipulation), resulting in a large initial download size (main.dart.js). For a Guest who simply needs to view a list and click a button, this overhead is unjustified compared to standard HTML/CSS.
+    \item Language Barrier \\
+        Flutter uses Dart. Choosing it would require maintaining two distinct codebases in different languages (TypeScript for Backend, Dart for Frontend), preventing the sharing of DTOs (Data Transfer Objects) and increasing cognitive load.
+    \item SEO \& Accessibility \\
+        React renders semantic HTML, which is superior for accessibility (screen readers) and SEO compared to Flutter's canvas-based approach.
+\end{itemize}
+
+\subsubsection{React vs. Angular}
+Angular is a comprehensive enterprise framework, but React was preferred for:
+\begin{itemize}
+    \item Flexibility vs. Rigidity \\
+        Angular is an opinionated, "batteries-included" framework. For a relatively simple application like Gift List, Angular's complexity (Dependency Injection, RxJS, Modules) introduces unnecessary boilerplate.
+    \item Mobile Path \\
+        Angular's primary path to mobile is via Ionic (WebView/Hybrid). React's path is React Native (Native UI). React Native offers a significantly better performance and "native feel" (gestures, animations) than a Hybrid WebView application.
+    \item Learning Curve \\
+        React's functional component model is conceptually closer to the Node.js backend logic, facilitating full-stack development.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Project Structure}
+The project will follow a feature-based folder structure to ensure maintainability and scalability.
+\begin{verbatim}
+/src
+  /assets         # Static files (images, fonts)
+  /components     # Shared UI components (Button, Input, Card)
+  /features       # Domain-specific logic
+    /auth         # Login, Register forms and logic
+    /gift-list    # List view, Item card, Claim logic
+    /dashboard    # Celebrant admin panel
+  /hooks          # Shared custom hooks (useAuth, useTheme)
+  /lib            # Configuration (API client, utils)
+  /types          # Shared TypeScript interfaces (synced with Backend)
+  App.tsx         # Main entry point with Routing
+\end{verbatim}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Future Mobile Strategy}
+To prepare for the future mobile application, the frontend code will strictly separate \textbf{Business Logic} from \textbf{UI Components}.
+\begin{itemize}
+    \item Logic (Hooks) \\
+        All API calls, state transformations, and validation rules will be encapsulated in Custom Hooks (e.g., \texttt{useGiftList(slug)}). These hooks are UI-agnostic and can be imported directly into React Native.
+    \item UI (Components) \\
+        Visual components will be the only part requiring a rewrite (replacing HTML \texttt{<div>} with React Native \texttt{<View>}). This strategy maximizes code reuse (estimated >70\%) while ensuring a truly native experience.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Implementation Details}
+This section outlines the specific implementation strategies for key frontend components, routing, and user feedback mechanisms.
+
+\subsection{Routing Strategy}
+The application uses React Router (v7) to manage navigation. The routes are divided into Public (Guest) and Protected (Celebrant) areas.
+
+\begin{itemize}
+    \item Public Routes (Guest Access) \\
+    \begin{itemize}
+        \item \texttt{/}: Landing page with Login/Register options for Celebrants.
+        \item \texttt{/lists/:slug}: The main view for a Guest to see the gift list.
+        \item \texttt{/lists/:slug/access}: A simple form to capture the Guest's email before granting access.
+        \item \texttt{/lists/:slug/my-claims}: A filtered view showing only the items claimed by the current Guest.
+    \end{itemize}
+    \item Protected Routes (Celebrant Dashboard) \\
+    Requires a valid JWT. Unauthenticated access redirects to \texttt{/}.
+    \begin{itemize}
+        \item \texttt{/dashboard}: Overview of all created lists.
+        \item \texttt{/dashboard/new}: Form to create a new list.
+        \item \texttt{/dashboard/:slug}: Management view for a specific list (Add/Edit/Delete items).
+    \end{itemize}
+\end{itemize}
+
+\subsection{Component Architecture}
+Key components will encapsulate specific business logic states to ensure a consistent user experience.
+
+\subsubsection{GiftCard Component}
+This is the core component for displaying a gift item. It has distinct visual states based on the item's status and the user's role.
+\begin{itemize}
+    \item Available State \\
+        Displays the item details (Image, Name, Description) and a prominent "Claim" button.
+    \item Claimed by Current User \\
+        Visually distinct (e.g., highlighted border). Displays an "Unclaim" button to allow reversal of the action.
+    \item Claimed by Other \\
+        The item appears "disabled" or transparent. The "Claim" button is replaced by a "Claimed" label. No interaction is possible.
+\end{itemize}
+
+\subsubsection{ClaimButton Component}
+Handles the interaction with the backend API.
+\begin{itemize}
+    \item Optimistic UI \\
+        When clicked, the button immediately reflects the new state (e.g., changes from "Claim" to "Claiming...") before the API response is received.
+    \item Error Handling \\
+        If the API call fails (e.g., race condition where another guest claimed it seconds before), the button reverts to its original state and triggers a global error notification.
+\end{itemize}
+
+\subsection{Global Styling Strategy}
+To maintain consistency and ease of maintenance, a set of CSS variables will be defined at the \texttt{:root} level. Semantic naming will be used over descriptive naming.
+\begin{itemize}
+    \item Colors \\
+        \texttt{--color-primary}, \texttt{--color-secondary}, \texttt{--color-bg}, \texttt{--color-text}, \texttt{--color-error}, \texttt{--color-success}.
+    \item Spacing \\
+        \texttt{--spacing-xs}, \texttt{--spacing-sm}, \texttt{--spacing-md}, \texttt{--spacing-lg}, \texttt{--spacing-xl}.
+    \item Typography \\
+        \texttt{--font-family-base}, \texttt{--font-size-sm}, \texttt{--font-size-md}, \texttt{--font-size-lg}.
+\end{itemize}
+
+\subsection{Feedback Mechanisms}
+The application will use non-intrusive notifications to communicate system status.
+\begin{itemize}
+    \item Toast Notifications \\
+        Temporary pop-up messages (e.g., bottom-right corner) for transient events like "Item successfully claimed" or "Network error".
+    \item Skeleton Loading \\
+        During data fetching, "skeleton" placeholders (gray boxes mimicking the content shape) will be displayed instead of a blank screen or a generic spinner, reducing perceived wait time.
+\end{itemize}
