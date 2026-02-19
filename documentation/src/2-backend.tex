@@ -1,2 +1,209 @@
 \chapter{Backend}
 \label{chap:backend}
+The backend of the Gift List application is designed to be robust, scalable, and secure. Based on the requirements for real-time interactivity and concurrent access, we have selected a \textbf{Node.js} environment. Node.js is an excellent choice for this application due to its event-driven, non-blocking I/O model, which efficiently handles multiple simultaneous connections—critical for when guests are viewing and claiming gifts at the same time.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Technology Stack}
+The proposed technology stack for the backend includes:
+\begin{itemize}
+    \item Runtime Environment \\
+        Node.js v24 (last LTS to Febbruary 2026).
+    \item Web Framework \\
+        Express.js. A minimalist and flexible framework that allows for rapid API development.
+    \item Database \\
+        PostgreSQL. Selected for its reliability and support for ACID transactions, which are essential for preventing race conditions (e.g., double-claiming a gift).
+    \item ORM \\
+        Prisma. To provide type-safe database access and simplify schema management.
+    \item Authentication \\
+        JSON Web Tokens (JWT) for stateless authentication of Celebrants.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{System Architecture}
+The backend will follow the Model-View-Controller (MVC) architectural pattern to ensure a clean separation of concerns.
+
+\begin{itemize}
+    \item Models \\
+        Represent the data structures and encapsulate the core business logic. In our stack, the Models are defined and managed via Prisma, which handles database interactions and ensures data integrity through its schema.
+    \item Views \\
+        In the context of a RESTful API, the View layer is responsible for formatting the data into standard JSON responses. It ensures that the client receives only the necessary information in a structured format.
+    \item Controllers \\
+        Act as the intermediary between Models and Views. They receive incoming HTTP requests, process user input, interact with the Models to perform operations, and select the appropriate View to return to the client.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Configuration}
+The application is configured using environment variables. These variables are essential for both development and production environments. It is recommended to create a \texttt{.env.example} file in the project root to serve as a template.
+
+\begin{itemize}
+    \item \texttt{DATABASE\_URL} \\
+        The connection string for the PostgreSQL database, used by Prisma. \\
+        Example: \texttt{postgresql://user:password@localhost:5432/giftlist}
+    \item \texttt{JWT\_SECRET} \\
+        A long, random, and secret string for signing and verifying JSON Web Tokens. This must be kept private.
+    \item \texttt{PORT} \\
+        The port for the Node.js server. Defaults to \texttt{3000} if not specified.
+    \item \texttt{CORS\_ORIGIN} \\
+        The URL of the frontend application allowed to access the API, to enforce Cross-Origin Resource Sharing (CORS) policies.
+    \item \texttt{SMTP\_HOST}, \texttt{SMTP\_PORT}, \texttt{SMTP\_USER}, \texttt{SMTP\_PASS} \\
+        Credentials for the SMTP server (used by Nodemailer) to send email notifications.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Data Model}
+The database schema is designed to support the relationships between Celebrants, Lists, and Guests.
+\begin{itemize}
+    \item \textbf{User (Celebrant)}: Stores celebrant data.
+        \begin{itemize}
+            \item \texttt{id}: UUID, Primary Key
+            \item \texttt{email}: String, unique, required
+            \item \texttt{password}: String, hashed, required
+        \end{itemize}
+    \item \textbf{GiftList}: Represents a specific event's wish list.
+        \begin{itemize}
+            \item \texttt{id}: UUID, Primary Key
+            \item \texttt{userId}: Foreign Key to User
+            \item \texttt{slug}: String, unique. Automatically generated from the name.
+            \item \texttt{name}: String, required
+        \end{itemize}
+    \item \textbf{GiftItem}: Represents an individual gift.
+        \begin{itemize}
+            \item \texttt{id}: UUID, Primary Key
+            \item \texttt{listId}: Foreign Key to GiftList
+            \item \texttt{name}: String, required
+            \item \texttt{description}: Text, optional
+            \item \texttt{url}: String, optional
+            \item \texttt{status}: Enum (\texttt{AVAILABLE}, \texttt{CLAIMED}), required, default: \texttt{AVAILABLE}
+            \item \texttt{preference}: Enum (\texttt{LOW}, \texttt{MEDIUM}, \texttt{HIGH}), required, default: \texttt{MEDIUM}
+        \end{itemize}
+    \item \textbf{GuestAccess}: Links a guest's email to a specific list for notification purposes.
+        \begin{itemize}
+            \item \texttt{id}: UUID, Primary Key
+            \item \texttt{listId}: Foreign Key to GiftList
+            \item \texttt{email}: String, required
+            \item A unique constraint should be on \texttt{(listId, email)}.
+        \end{itemize}
+    \item \textbf{GuestClaim}: A record linking a \texttt{GiftItem} to a \texttt{GuestAccess} record.
+        \begin{itemize}
+            \item \texttt{itemId}: Foreign Key to GiftItem, Primary Key (ensures an item is claimed only once)
+            \item \texttt{guestId}: Foreign Key to GuestAccess
+        \end{itemize}
+\end{itemize}
+
+\subsection{Deletion Strategy (Soft Deletes)}
+To ensure data integrity and preserve history, the application will adopt a soft-delete strategy for all major records (including Users, GiftLists, and GiftItems). Instead of physically removing records from the database, a \texttt{deletedAt} timestamp will be added to the relevant models.
+
+When an entity is "deleted," this timestamp will be set. All API queries for retrieving data must be filtered to exclude records where \texttt{deletedAt} is not null, unless explicitly requested (e.g., by an administrator). This approach simplifies data recovery and maintains the relational structure.
+
+\subsection{Data Validation Rules}
+To ensure data integrity and security, the following validation rules will be enforced at the API level.
+\begin{itemize}
+    \item User (Celebrant)
+    \begin{itemize}
+        \item \texttt{email}: Must be a syntactically valid email address.
+        \item \texttt{password}: Must be at least 8 characters long and contain at least one uppercase letter and at least one number or special character.
+    \end{itemize}
+    \item GiftList
+    \begin{itemize}
+        \item \texttt{name}: Must be between 3 and 50 characters long.
+        \item \texttt{slug}: Must only contain lowercase letters, numbers, and hyphens (\texttt{-}).
+    \end{itemize}
+    \item GiftItem
+    \begin{itemize}
+        \item \texttt{name}: Must be between 3 and 50 characters long.
+        \item \texttt{url}: If provided, must be a valid URL format.
+        \item \texttt{description}: Optional. If provided, it must not exceed 200 characters.
+    \end{itemize}
+    \item GuestAccess
+    \begin{itemize}
+        \item \texttt{email}: Must be a syntactically valid email address.
+    \end{itemize}
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{API Design}
+The backend will expose a RESTful API.
+
+\subsection{Architectural Choice}
+The decision to use a RESTful architecture over alternatives like gRPC or GraphQL is based on several key factors:
+\begin{itemize}
+    \item Simplicity \\
+        REST is the native standard of the web. It allows for straightforward integration with any browser-based client without the need for specialized libraries or complex client-side configurations.
+    \item Low Friction for Guests \\
+        Since the application relies on sharing public links, REST ensures that the initial list retrieval is fast and compatible with all web environments.
+    \item Productivity \\
+        RESTful APIs are easy to document, test, and debug using standard tools (e.g., browser dev tools, curl). Given the linear nature of our data (Lists and Items), the overhead of GraphQL's schema management or gRPC's binary serialization (Protobuf) would not provide significant benefits for this specific use case.
+\end{itemize}
+
+\subsection{Error Handling}
+The API uses standard HTTP status codes to indicate the success or failure of a request. In case of an error, the response body will contain a JSON object with a consistent structure:
+\begin{verbatim}
+{
+  "error": {
+    "code": "ERROR_CODE_STRING",
+    "message": "A human-readable description of the error."
+  }
+}
+\end{verbatim}
+
+\subsubsection{Common Status Codes}
+\begin{itemize}
+    \item \texttt{400 Bad Request}: The request was malformed, such as containing invalid JSON or failing validation rules.
+    \item \texttt{401 Unauthorized}: Authentication is required and has failed or has not yet been provided.
+    \item \texttt{403 Forbidden}: The authenticated user does not have permission for the requested action.
+    \item \texttt{404 Not Found}: The requested resource could not be found.
+    \item \texttt{409 Conflict}: The request could not be processed because of a conflict in the current state of the resource (e.g., an item is already claimed).
+    \item \texttt{500 Internal Server Error}: An unexpected error occurred on the server.
+\end{itemize}
+
+\subsection{Authentication and Public Routes}
+These routes handle celebrant authentication and guest operations.
+\begin{itemize}
+    \item \texttt{POST /api/auth/register} \\
+    Registers a new Celebrant account. Requires an \texttt{email} and \texttt{password}.
+    \item \texttt{POST /api/auth/login} \\
+    Authenticates a Celebrant using \texttt{email} and \texttt{password}, returning a JWT upon success.
+    \item \texttt{POST /api/lists/:slug/access} \\
+    Registers a guest's email for a specific list. This is a mandatory step before interacting with the list. The backend stores the email and sets a session cookie to identify the guest. On subsequent visits from the same browser, this cookie allows for automatic recognition. If accessing from a different browser or after the cookie has expired, the guest must provide their email again to be linked to their previous activity on the list.
+    \item \texttt{GET /api/lists/:slug} \\
+    Retrieves the gift list and all items. Requires a valid guest session, identified via the session cookie.
+    \item \texttt{GET /api/lists/:slug/my-claims} \\
+    Allows an authenticated guest (identified via session cookie) to retrieve a list containing only the items they have personally claimed.
+    \item \texttt{POST /api/items/:id/claim} \\
+    Allows a guest to claim an item. The guest identity is inferred from their active session cookie.
+    \item \texttt{POST /api/items/:id/unclaim} \\
+    Allows a guest to un-claim an item they previously claimed, making it available again. The guest identity is inferred from their active session cookie.
+\end{itemize}
+
+\subsection{Protected Routes}
+These are the celebrant operations and require a valid JWT in the Authorization header.
+\begin{itemize}
+    \item \texttt{POST /api/lists} \\
+        Creates a new list. Requires a \texttt{name} in the request body. The backend automatically generates a URL-safe, unique \texttt{slug} from the name. If a slug collision occurs, a unique 5-character suffix is appended.
+    \item \texttt{POST /api/lists/:id/item} \\
+        Add a single new item to a list.
+    \item \texttt{PATCH /api/items/:id} \\
+        Allows a celebrant to update an existing item's details (e.g., name, description, url, preference).
+    \item \texttt{DELETE /api/items/:id} \\
+        Remove an item.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Handling Concurrency}
+To prevent the race condition when two guests from claiming the same item simultaneously, the backend will utilize database transactions. When a claim request is received:
+\begin{enumerate}
+    \item Start Transaction.
+    \item Lock the specific Item row (e.g., \texttt{SELECT ... FOR UPDATE}).
+    \item Verify the status is \texttt{AVAILABLE}.
+    \item Insert a \texttt{GuestClaim} record and update Item status.
+    \item Commit Transaction.
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Notification}
+If a Celebrant deletes an item that is already \texttt{CLAIMED}:
+\begin{enumerate}
+    \item The backend identifies the associated \texttt{GuestClaim}.
+    \item Before completing the deletion, the system triggers an email notification service (e.g., Nodemailer) to inform the guest.
+    \item The item is then soft-deleted, following the application-wide strategy.
+\end{enumerate}

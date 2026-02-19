@@ -13,7 +13,8 @@ The primary goal of this application is to simplify gift coordination, reduce re
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{images/1-introduction/use-case.pdf}
+    \includegraphics[width=.4\textwidth]{images/1-introduction/use-case.pdf}
+    \vspace{-100pt}
     \caption{Use case diagram of Gift List requirements.}
 \end{figure}
 
@@ -23,9 +24,12 @@ In this Section we will define the requirements for the application. The applica
 \begin{itemize}
     \item \textbf{User Authentication (Celebrant Only):} The application must allow Celebrants to register and log-in to manage their lists securely. Guests should be able to access lists via a shared link without requiring an account, to minimize friction.
     \item \textbf{List Management:} Authenticated Celebrants must be able to create and delete gift lists.
-    \item \textbf{Item Management:} Celebrants must be able to add and remove items from their lists. For each item, they can provide a name, description, and an optional external URL (e.g., to an online store).
-    \item \textbf{List Access:} Guests must be able to view a specific gift list using a unique URL provided by the Celebrant.
+    \item \textbf{Item Management:} Celebrants must be able to add, edit, and remove items from their lists. For each item, they can provide a name, description, an optional external URL, and set a preference level (e.g., Low, Medium, High).
+    \item \textbf{List Access:} Guests must be able to view a specific gift list using a unique URL provided by the Celebrant. To access the list items, a Guest must provide an email address; this is mandatory to ensure the system can notify the Guest if a claimed item is subsequently removed by the Celebrant.
     \item \textbf{Item Claiming:} Guests must be able to mark an item as "claimed" or "purchased". This action must be visible to other Guests to prevent duplicate purchases but must remain hidden from the Celebrant to preserve the surprise.
+    \item \textbf{Item Unclaiming:} Guests must be able to revert a claim (e.g., in case of accidental selection), making the item available again. This action is only permitted for the guest who originally claimed the item.
+    \item \textbf{Personal Claim Visibility:} Guests accessing the list should clearly distinguish which items they have personally claimed versus those claimed by others, facilitating easier management of their intended purchases.
+    \item \textbf{Guest Claim Summary:} Guests must have access to a dedicated view or section that lists only the items they have personally claimed for a specific list, providing a clear summary of their planned gifts.
     \item \textbf{Claimed Item Removal:} If a Celebrant removes an item that has already been claimed by a Guest, the system must allow the removal but must immediately notify the Guest who claimed it. This prevents the Guest from purchasing an item that is no longer desired, while maintaining the Guest's anonymity.
 \end{itemize}
 

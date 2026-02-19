@@ -1,3 +1,5 @@
 documentation/build/
 documentation/main.pdf
 documentation/images/**/*.pdf
+.VS_Store
+.vscode/
