@@ -11,8 +11,23 @@ The application serves two primary user roles:
 
 The primary goal of this application is to simplify gift coordination, reduce redundant gifts, and enhance the gift-giving experience by ensuring celebrants receive desired items while preserving the element of surprise.
 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{images/1-introduction/use-case.pdf}
+    \caption{Use case diagram of Gift List requirements.}
+\end{figure}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Requirements}
+In this Section we will define the requirements for the application. The application must meet the following functional requirements:
+\begin{itemize}
+    \item \textbf{User Authentication (Celebrant Only):} The application must allow Celebrants to register and log-in to manage their lists securely. Guests should be able to access lists via a shared link without requiring an account, to minimize friction.
+    \item \textbf{List Management:} Authenticated Celebrants must be able to create and delete gift lists.
+    \item \textbf{Item Management:} Celebrants must be able to add and remove items from their lists. For each item, they can provide a name, description, and an optional external URL (e.g., to an online store).
+    \item \textbf{List Access:} Guests must be able to view a specific gift list using a unique URL provided by the Celebrant.
+    \item \textbf{Item Claiming:} Guests must be able to mark an item as "claimed" or "purchased". This action must be visible to other Guests to prevent duplicate purchases but must remain hidden from the Celebrant to preserve the surprise.
+    \item \textbf{Claimed Item Removal:} If a Celebrant removes an item that has already been claimed by a Guest, the system must allow the removal but must immediately notify the Guest who claimed it. This prevents the Guest from purchasing an item that is no longer desired, while maintaining the Guest's anonymity.
+\end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Documentation Structure}

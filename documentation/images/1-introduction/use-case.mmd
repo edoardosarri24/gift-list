@@ -1,0 +1,36 @@
+flowchart LR
+    %% Definizione degli Attori come cerchi (molto simili agli stickman nel concetto)
+    C((Celebrant))
+    G((Guest))
+
+    %% Sistema come contenitore rettangolare
+    subgraph "Gift List System"
+        direction TB
+        %% Casi d'uso definiti come ellissi
+        UC1([Register/Login])
+        UC2([Create Gift List])
+        UC3([Delete Gift List])
+        UC4([Add Item])
+        UC5([Remove Item])
+        UC6([View List via URL])
+        UC7([Claim Item])
+        UC8([Receive Removal Notification])
+    end
+
+    %% Relazioni tra Attori e Casi d'Uso (linee semplici, senza frecce)
+    C --- UC1
+    C --- UC2
+    C --- UC3
+    C --- UC4
+    C --- UC5
+
+    G --- UC6
+    G --- UC7
+    G --- UC8
+
+    %% Relazione tra casi d'uso (linea tratteggiata con freccia per include/extend)
+    UC5 -.->|include| UC8
+
+    %% Styling per farlo sembrare più "UML"
+    style C fill:#f9f,stroke:#333,stroke-width:2px
+    style G fill:#f9f,stroke:#333,stroke-width:2px
