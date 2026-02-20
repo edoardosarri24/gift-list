@@ -35,7 +35,7 @@ The frontend will be built as a Single Page Application (SPA) using the followin
 To ensure a high-quality user experience and data integrity, form management follows a strict pattern:
 \begin{itemize}
     \item Schema Sharing \\
-        Validation schemas (Zod) are defined in a shared \texttt{/src/lib/validations} folder to be used by both the frontend forms and backend API controllers, ensuring a single source of truth.
+        Validation schemas (Zod) are defined in a shared package at \texttt{packages/shared/validations} to be used by both the frontend forms and backend API controllers, ensuring a single source of truth.
     \item Error Feedback \\
         Validation errors are displayed in real-time as the user types, providing immediate corrective feedback.
     \item Submission Lifecycle \\
@@ -48,11 +48,16 @@ Axios is configured as a singleton client with the following settings:
 \begin{itemize}
     \item \textbf{Base URL}: Configured with the \texttt{/api/v1} prefix to ensure compatibility with versioned backend routes.
     \item \texttt{withCredentials: true} \\
-        This is mandatory to allow the browser to send and receive the \texttt{guest\_session} cookie required for guest identity tracking.
+        This is mandatory to allow the browser to send and receive the \texttt{guest\_session} cookie (for Guests) and the \texttt{refresh\_token} cookie (for Celebrants).
     \item Authentication Header \\
-        An interceptor automatically attaches the \texttt{Authorization: Bearer <token>} header to all requests if a JWT is present (for Celebrants).
-    \item Global Error Interceptor \\
-        A response interceptor catches specific status codes (e.g., 401 Unauthorized) to trigger automatic logout or redirects.
+        An interceptor automatically attaches the \texttt{Authorization: Bearer <token>} header to all requests if a JWT is present.
+    \item \textbf{Token Refresh Interceptor} \\
+        A specialized interceptor catches \texttt{401 Unauthorized} errors. If the error is due to an expired Access Token, the client attempts a one-time refresh via the \texttt{POST /auth/refresh} endpoint. If successful, the original request is retried with the new token; otherwise, the user is logged out.
+    \item \textbf{Global Error Interceptor} \\
+        A response interceptor catches other specific status codes to trigger global notifications (Toasts).
+        \begin{itemize}
+            \item \textbf{Guest Session Handling}: If a Guest attempts to access a protected list route (e.g., \texttt{GET /lists/:slug}) and receives a \texttt{401 Unauthorized} or \texttt{403 Forbidden} error (indicating an invalid or missing session cookie), the interceptor automatically redirects the user to the access page (\texttt{/lists/:slug/access}) to re-enter their email.
+        \end{itemize}
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -119,7 +124,21 @@ Angular is a comprehensive enterprise framework, but React was preferred for:
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Project Structure}
-The project will follow a feature-based folder structure to ensure maintainability and scalability.
+The project will follow a Monorepo structure (using pnpm workspaces) to facilitate code sharing and consistent tooling.
+
+\begin{verbatim}
+/
+  /apps
+    /backend      # Node.js Express API
+    /frontend     # React application
+  /packages
+    /shared       # Shared Zod schemas, TypeScript types, and utilities
+  /docker         # Docker configuration files
+  docker-compose.yml
+\end{verbatim}
+
+\subsection{Frontend Internal Structure}
+Within \texttt{apps/frontend/src}, the structure follows a feature-based organization:
 \begin{verbatim}
 /src
   /assets         # Static files (images, fonts)
@@ -129,8 +148,7 @@ The project will follow a feature-based folder structure to ensure maintainabili
     /gift-list    # List view, Item card, Claim logic
     /dashboard    # Celebrant admin panel
   /hooks          # Shared custom hooks (useAuth, useTheme)
-  /lib            # Configuration (API client, validations, utils)
-  /types          # Shared TypeScript interfaces (synced with Backend)
+  /lib            # Configuration (API client, utils)
   App.tsx         # Main entry point with Routing
 \end{verbatim}
 
@@ -211,7 +229,17 @@ To maintain consistency, a set of CSS variables will be defined at the \texttt{:
 \end{itemize}
 
 \subsection{Feedback Mechanisms}
-The application will use non-intrusive notifications (Toasts) and Skeleton Loading during data fetching.
+The application will use the following mechanisms to ensure a smooth and informative user experience:
+\begin{itemize}
+    \item \textbf{Toasts}: Non-intrusive notifications for success (e.g., "Item claimed!") and errors.
+    \item \textbf{Skeleton Loading}: Used during initial data fetching to prevent layout shifts and provide a sense of progress.
+    \item \textbf{Empty States}: Custom informative messages or "Call-to-Action" (CTA) buttons when a view has no data.
+    \begin{itemize}
+        \item \textit{Dashboard}: If a Celebrant has no lists, a prominent "Create your first list" CTA is displayed.
+        \item \textit{Gift List}: If a list has no items, Guests see a friendly message indicating that the celebrant is still working on it.
+        \item \textit{My Claims}: If a Guest has not claimed anything, they are encouraged to browse the list again.
+    \end{itemize}
+\end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Testing Strategy}

@@ -6,6 +6,5 @@ This project outlines the development of a 'Gift List' application. The applicat
 .
 ├── README.md
 ├── agent.md - Contains the system context and instructions for the AI agent.
-├── documentation/ - Contains the project's formal documentation in LaTeX format.
-└── todo.md - A file for tracking development tasks and to-do items.
+└── documentation/ - Contains the project's formal documentation in LaTeX format.
 ```

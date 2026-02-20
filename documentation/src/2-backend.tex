@@ -14,7 +14,7 @@ The proposed technology stack for the backend includes:
     \item ORM \\
         Prisma. To provide type-safe database access and simplify schema management.
     \item Authentication \\
-        JSON Web Tokens (JWT) for stateless authentication of Celebrants.
+        JSON Web Tokens (JWT) for stateless authentication of Celebrants, complemented by a Refresh Token strategy to ensure a seamless user experience without compromising security.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -29,6 +29,85 @@ The backend will follow the Model-View-Controller (MVC) architectural pattern to
     \item Controllers \\
         Act as the intermediary between Models and Views. They receive incoming HTTP requests, process user input, interact with the Models to perform operations, and select the appropriate View to return to the client.
 \end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Database Schema (Prisma)}
+The following Prisma schema defines the source of truth for our data models and their relations.
+
+\begin{verbatim}
+// schema.prisma
+
+enum ItemStatus {
+  AVAILABLE
+  CLAIMED
+}
+
+enum PreferenceLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id                 String     @id @default(uuid())
+  email              String     @unique
+  password           String
+  resetToken         String?    @unique
+  resetTokenExpires  DateTime?
+  refreshToken       String?    @unique // For long-lived sessions
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  lists              GiftList[]
+}
+
+model GiftList {
+  id           String        @id @default(uuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  slug         String        @unique // Globally unique
+  name         String
+  items        GiftItem[]
+  guestAccess  GuestAccess[]
+  deletedAt    DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model GiftItem {
+  id          String          @id @default(uuid())
+  listId      String
+  list        GiftList        @relation(fields: [listId], references: [id])
+  name        String
+  description String?
+  url         String?
+  status      ItemStatus      @default(AVAILABLE)
+  preference  PreferenceLevel @default(MEDIUM)
+  claim       GuestClaim?
+  deletedAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model GuestAccess {
+  id        String       @id @default(uuid())
+  listId    String
+  list      GiftList     @relation(fields: [listId], references: [id])
+  email     String
+  language  String       @default("en")
+  claims    GuestClaim[]
+  createdAt DateTime     @default(now())
+
+  @@unique([listId, email])
+}
+
+model GuestClaim {
+  itemId    String      @id
+  item      GiftItem    @relation(fields: [itemId], references: [id])
+  guestId   String
+  guest     GuestAccess @relation(fields: [guestId], references: [id])
+  createdAt DateTime    @default(now())
+}
+\end{verbatim}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Configuration}
@@ -47,6 +126,14 @@ The application is configured using environment variables. These variables are e
     \item \texttt{SMTP\_HOST}, \texttt{SMTP\_PORT}, \texttt{SMTP\_USER}, \texttt{SMTP\_PASS} \\
         Credentials for the SMTP server (used by Nodemailer) to send email notifications.
 \end{itemize}
+
+\subsection{Authentication Strategy: Access \& Refresh Tokens}
+To balance security and usability, the application implements a dual-token system:
+\begin{itemize}
+    \item \textbf{Access Token (JWT)}: Short-lived (15 minutes). Sent in the \texttt{Authorization} header.
+    \item \textbf{Refresh Token}: Long-lived (7 days). Stored in a \texttt{HttpOnly}, \texttt{Secure} cookie.
+\end{itemize}
+When the Access Token expires, the frontend automatically calls a \texttt{POST /auth/refresh} endpoint, which verifies the Refresh Token and issues a new Access Token. This ensures that the Celebrant stays logged in while they are actively using the dashboard.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Data Model}
@@ -119,6 +206,11 @@ A scheduled background task (cron job) will execute these cleanup operations dai
 
 \subsection{Data Validation Rules}
 To ensure data integrity and security, the following validation rules will be enforced at the API level.
+
+\subsubsection{Shared Schemas}
+To guarantee a Single Source of Truth (SSOT) between the Frontend and Backend, validation schemas are defined using \textbf{Zod} in a shared workspace package (\texttt{packages/shared}). The backend imports these schemas directly to validate incoming request bodies, ensuring that client-side validation logic matches server-side rules exactly.
+
+\subsubsection{Entity Rules}
 \begin{itemize}
     \item User (Celebrant)
     \begin{itemize}
@@ -140,6 +232,14 @@ To ensure data integrity and security, the following validation rules will be en
     \begin{itemize}
         \item \texttt{email}: Must be a syntactically valid email address.
     \end{itemize}
+\end{itemize}
+
+\subsection{Slug Generation and Collision Strategy}
+Slugs are URL-friendly strings generated from the list name.
+\begin{itemize}
+    \item \textbf{Global Uniqueness}: Since lists are accessed via \texttt{/api/v1/lists/:slug}, every slug must be unique across the entire system.
+    \item \textbf{Generation}: The system uses a standard slugify algorithm (removing special characters and replacing spaces with hyphens).
+    \item \textbf{Collision Handling}: If a generated slug already exists, a 5-character random alphanumeric suffix is appended (e.g., \texttt{birthday-party} becomes \texttt{birthday-party-x7r2e}).
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -198,12 +298,16 @@ These routes handle celebrant authentication and guest operations. All routes ar
     Registers a new Celebrant account.
     \item \texttt{POST /auth/login} \\
     Authenticates a Celebrant and returns a JWT.
+    \item \texttt{POST /auth/refresh} \\
+    Exchanges a valid Refresh Token (from cookie) for a new Access Token.
     \item \texttt{POST /auth/forgot-password} \\
     Initiates the password reset process. Sends an email with a reset token if the email exists.
     \item \texttt{POST /auth/reset-password} \\
     Sets a new password using a valid reset token.
     \item \texttt{POST /lists/:slug/access} \\
-    Registers or identifies a guest's email for a specific list. If the email already exists for this list, it refreshes the guest session. The backend stores the email and sets a secure, \texttt{HttpOnly} session cookie.
+    Registers or identifies a guest's email for a specific list. If the email already exists for this list, it refreshes the guest session.
+    \textbf{Payload}: \texttt{\{ "email": "guest@example.com", "language": "it" \}}.
+    The backend stores the email and sets a secure, \texttt{HttpOnly} session cookie.
     \item \texttt{GET /lists/:slug} \\
     Retrieves the gift list and all items. Requires a valid guest session. \textbf{Note:} For guests, this response includes the \texttt{status} of each item to show what is available.
     \item \texttt{GET /lists/:slug/my-claims} \\
@@ -221,7 +325,7 @@ These require a valid JWT in the Authorization header.
         Retrieves all lists created by the authenticated Celebrant.
     \item \texttt{POST /lists} \\
         Creates a new list. Requires a \texttt{name}.
-    \item \texttt{GET /lists/:id/manage} \\
+    \item \texttt{GET /lists/:slug/manage} \\
         Retrieves the full details of a specific list for management. \textbf{Surprise Protection:} This route \textit{explicitly excludes} any information regarding the \texttt{status} (CLAIMED/AVAILABLE) or guest claims.
     \item \texttt{DELETE /lists/:id} \\
         Soft-removes an entire list. If items were claimed, notifications are triggered.
@@ -309,7 +413,8 @@ To ensure consistency between frontend and backend, we define the following Data
     \item \textbf{Guest Access Request}
 \begin{verbatim}
 {
-  "email": "guest@example.com"
+  "email": "guest@example.com",
+  "language": "it"
 }
 \end{verbatim}
 \end{itemize}
