@@ -10,16 +10,58 @@ The frontend will be built as a Single Page Application (SPA) using the followin
     \item Language \\
         TypeScript. To ensure type safety and align with the backend data models.
     \item Build Tool \\
-        Vite. Chosen for its superior performance and rapid development cycle compared to legacy tools like Webpack.
+        Vite. Chosen for its superior performance and rapid development cycle.
     \item Routing \\
-        React Router (v7). To manage navigation between the public guest views and the private celebrant dashboard.
+        React Router (v7).
+    \item API Client \\
+        Axios. Used for its robust interceptor support, allowing centralized handling of JWT authentication and error responses.
+    \item Form Management \& Validation \\
+        React Hook Form combined with Zod for schema-based validation.
+    \item Iconography \\
+        Lucide React. A clean, consistent icon set with a small bundle footprint.
     \item State Management \\
     \begin{itemize}
-        \item \textit{Server State:} TanStack Query (React Query) or SWR. To handle data fetching, caching, and synchronization with the backend, which is critical for real-time claim updates.
-        \item \textit{Client State:} React Context API or Zustand for global UI state (e.g., theme, user session).
+        \item \textit{Server State:} TanStack Query (React Query). To handle data fetching, caching, and synchronization with the backend.
+        \item \textit{Client State:} React Context API for global UI state (e.g., theme, user session).
     \end{itemize}
     \item Styling \\
-        CSS Modules with Vanilla CSS. This ensures component-scoped styling without the performance overhead or complexity of CSS-in-JS libraries or utility-first frameworks, keeping the codebase standard and portable.
+        CSS Modules with Vanilla CSS.
+    \item Internationalization \\
+        \texttt{react-i18next}. To manage translations and user language preferences.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Form \& Validation Strategy}
+To ensure a high-quality user experience and data integrity, form management follows a strict pattern:
+\begin{itemize}
+    \item Schema Sharing \\
+        Validation schemas (Zod) are defined in a shared \texttt{/src/lib/validations} folder to be used by both the frontend forms and backend API controllers, ensuring a single source of truth.
+    \item Error Feedback \\
+        Validation errors are displayed in real-time as the user types, providing immediate corrective feedback.
+    \item Submission Lifecycle \\
+        Submit buttons transition to a "Loading" state during API calls, disabling further clicks to prevent duplicate submissions.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{API Interaction}
+Axios is configured as a singleton client with the following settings:
+\begin{itemize}
+    \item \textbf{Base URL}: Configured with the \texttt{/api/v1} prefix to ensure compatibility with versioned backend routes.
+    \item \texttt{withCredentials: true} \\
+        This is mandatory to allow the browser to send and receive the \texttt{guest\_session} cookie required for guest identity tracking.
+    \item Authentication Header \\
+        An interceptor automatically attaches the \texttt{Authorization: Bearer <token>} header to all requests if a JWT is present (for Celebrants).
+    \item Global Error Interceptor \\
+        A response interceptor catches specific status codes (e.g., 401 Unauthorized) to trigger automatic logout or redirects.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Internationalization (i18n)}
+The application supports English and Italian using \texttt{react-i18next}.
+\begin{itemize}
+    \item \textbf{Detection}: The language is detected via the browser settings (\texttt{i18next-browser-languagedetector}).
+    \item \textbf{Structure}: Translation strings are stored in JSON files within \texttt{/public/locales/{en|it}/common.json}.
+    \item \textbf{Guest Preference}: When a Guest provides their email to access a list, their current language setting is sent to the backend to ensure notification emails are sent in the correct language.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -58,25 +100,21 @@ React was selected as the optimal choice for a "Web-First, Mobile-Second" strate
 We evaluated two major alternatives before selecting React.
 
 \subsubsection{React vs. Flutter (Dart)}
-Flutter is a powerful toolkit for building natively compiled applications, but it was deemed less suitable for this specific project:
+Flutter is a powerful toolkit for building natively compiled applications, but it was deemed less suitable for this project:
 \begin{itemize}
     \item Web "Heaviness" \\
-        Flutter for Web renders the UI on a canvas (or via heavy DOM manipulation), resulting in a large initial download size (main.dart.js). For a Guest who simply needs to view a list and click a button, this overhead is unjustified compared to standard HTML/CSS.
+        Flutter for Web renders the UI on a canvas, resulting in a large initial download size. For a Guest who simply needs to view a list and click a button, this overhead is unjustified.
     \item Language Barrier \\
-        Flutter uses Dart. Choosing it would require maintaining two distinct codebases in different languages (TypeScript for Backend, Dart for Frontend), preventing the sharing of DTOs (Data Transfer Objects) and increasing cognitive load.
-    \item SEO \& Accessibility \\
-        React renders semantic HTML, which is superior for accessibility (screen readers) and SEO compared to Flutter's canvas-based approach.
+        Choosing Flutter would prevent the sharing of DTOs and validation logic (TypeScript) between backend and frontend.
 \end{itemize}
 
 \subsubsection{React vs. Angular}
 Angular is a comprehensive enterprise framework, but React was preferred for:
 \begin{itemize}
     \item Flexibility vs. Rigidity \\
-        Angular is an opinionated, "batteries-included" framework. For a relatively simple application like Gift List, Angular's complexity (Dependency Injection, RxJS, Modules) introduces unnecessary boilerplate.
+        For a relatively simple application, Angular's complexity introduces unnecessary boilerplate.
     \item Mobile Path \\
-        Angular's primary path to mobile is via Ionic (WebView/Hybrid). React's path is React Native (Native UI). React Native offers a significantly better performance and "native feel" (gestures, animations) than a Hybrid WebView application.
-    \item Learning Curve \\
-        React's functional component model is conceptually closer to the Node.js backend logic, facilitating full-stack development.
+        React Native offers a significantly better performance and "native feel" than Angular's primary mobile path (Ionic/WebView).
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -87,11 +125,11 @@ The project will follow a feature-based folder structure to ensure maintainabili
   /assets         # Static files (images, fonts)
   /components     # Shared UI components (Button, Input, Card)
   /features       # Domain-specific logic
-    /auth         # Login, Register forms and logic
+    /auth         # Login, Register, Password Reset forms
     /gift-list    # List view, Item card, Claim logic
     /dashboard    # Celebrant admin panel
   /hooks          # Shared custom hooks (useAuth, useTheme)
-  /lib            # Configuration (API client, utils)
+  /lib            # Configuration (API client, validations, utils)
   /types          # Shared TypeScript interfaces (synced with Backend)
   App.tsx         # Main entry point with Routing
 \end{verbatim}
@@ -101,9 +139,9 @@ The project will follow a feature-based folder structure to ensure maintainabili
 To prepare for the future mobile application, the frontend code will strictly separate \textbf{Business Logic} from \textbf{UI Components}.
 \begin{itemize}
     \item Logic (Hooks) \\
-        All API calls, state transformations, and validation rules will be encapsulated in Custom Hooks (e.g., \texttt{useGiftList(slug)}). These hooks are UI-agnostic and can be imported directly into React Native.
+        All API calls, state transformations, and validation rules will be encapsulated in Custom Hooks. These are UI-agnostic and can be reused in React Native.
     \item UI (Components) \\
-        Visual components will be the only part requiring a rewrite (replacing HTML \texttt{<div>} with React Native \texttt{<View>}). This strategy maximizes code reuse (estimated >70\%) while ensuring a truly native experience.
+        Visual components will be the only part requiring a rewrite (replacing HTML with React Native primitives).
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -114,11 +152,13 @@ This section outlines the specific implementation strategies for key frontend co
 The application uses React Router (v7) to manage navigation. The routes are divided into Public (Guest) and Protected (Celebrant) areas.
 
 \begin{itemize}
-    \item Public Routes (Guest Access) \\
+    \item Public Routes \\
     \begin{itemize}
         \item \texttt{/}: Landing page with Login/Register options for Celebrants.
+        \item \texttt{/auth/forgot-password}: Form to request a password reset.
+        \item \texttt{/auth/reset-password}: Form to set a new password using the token from the email.
         \item \texttt{/lists/:slug}: The main view for a Guest to see the gift list.
-        \item \texttt{/lists/:slug/access}: A simple form to capture the Guest's email before granting access.
+        \item \texttt{/lists/:slug/access}: A simple form to capture the Guest's email.
         \item \texttt{/lists/:slug/my-claims}: A filtered view showing only the items claimed by the current Guest.
     \end{itemize}
     \item Protected Routes (Celebrant Dashboard) \\
@@ -126,49 +166,73 @@ The application uses React Router (v7) to manage navigation. The routes are divi
     \begin{itemize}
         \item \texttt{/dashboard}: Overview of all created lists.
         \item \texttt{/dashboard/new}: Form to create a new list.
-        \item \texttt{/dashboard/:slug}: Management view for a specific list (Add/Edit/Delete items).
+        \item \texttt{/dashboard/:slug}: Management view for a specific list.
     \end{itemize}
 \end{itemize}
 
 \subsection{Component Architecture}
 Key components will encapsulate specific business logic states to ensure a consistent user experience.
 
+\subsubsection{Error Boundaries}
+The application will implement React Error Boundaries at the feature level. This ensures that a failure in a specific component (e.g., a broken GiftCard) does not crash the entire application, allowing the user to continue using other parts of the system or simply refresh the affected section.
+
 \subsubsection{GiftCard Component}
 This is the core component for displaying a gift item. It has distinct visual states based on the item's status and the user's role.
 \begin{itemize}
     \item Available State \\
-        Displays the item details (Image, Name, Description) and a prominent "Claim" button.
+        Displays the item details and a prominent "Claim" button.
     \item Claimed by Current User \\
-        Visually distinct (e.g., highlighted border). Displays an "Unclaim" button to allow reversal of the action.
+        Visually distinct. Displays an "Unclaim" button.
     \item Claimed by Other \\
-        The item appears "disabled" or transparent. The "Claim" button is replaced by a "Claimed" label. No interaction is possible.
+        The item appears "disabled" or transparent.
 \end{itemize}
 
 \subsubsection{ClaimButton Component}
 Handles the interaction with the backend API.
 \begin{itemize}
     \item Optimistic UI \\
-        When clicked, the button immediately reflects the new state (e.g., changes from "Claim" to "Claiming...") before the API response is received.
+        When clicked, the button immediately reflects the new state before the API response is received.
     \item Error Handling \\
-        If the API call fails (e.g., race condition where another guest claimed it seconds before), the button reverts to its original state and triggers a global error notification.
+        If the API call fails, the button reverts to its original state and triggers a global notification.
 \end{itemize}
 
 \subsection{Global Styling Strategy}
-To maintain consistency and ease of maintenance, a set of CSS variables will be defined at the \texttt{:root} level. Semantic naming will be used over descriptive naming.
+To maintain consistency, a set of CSS variables will be defined at the \texttt{:root} level.
+
 \begin{itemize}
-    \item Colors \\
-        \texttt{--color-primary}, \texttt{--color-secondary}, \texttt{--color-bg}, \texttt{--color-text}, \texttt{--color-error}, \texttt{--color-success}.
+    \item Colors (The "Elegant Indigo" Palette) \\
+    \begin{itemize}
+        \item \texttt{--color-primary}: \texttt{\#6366f1}, \texttt{--color-secondary}: \texttt{\#f43f5e}, \texttt{--color-bg}: \texttt{\#f8fafc}.
+    \end{itemize}
     \item Spacing \\
-        \texttt{--spacing-xs}, \texttt{--spacing-sm}, \texttt{--spacing-md}, \texttt{--spacing-lg}, \texttt{--spacing-xl}.
+        Standardized scale: 4px, 8px, 16px, 24px, 32px.
     \item Typography \\
-        \texttt{--font-family-base}, \texttt{--font-size-sm}, \texttt{--font-size-md}, \texttt{--font-size-lg}.
+        \texttt{'Inter', system-ui, sans-serif}.
 \end{itemize}
 
 \subsection{Feedback Mechanisms}
-The application will use non-intrusive notifications to communicate system status.
+The application will use non-intrusive notifications (Toasts) and Skeleton Loading during data fetching.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Testing Strategy}
+To ensure reliability, a multi-layered testing approach is adopted.
+
 \begin{itemize}
-    \item Toast Notifications \\
-        Temporary pop-up messages (e.g., bottom-right corner) for transient events like "Item successfully claimed" or "Network error".
-    \item Skeleton Loading \\
-        During data fetching, "skeleton" placeholders (gray boxes mimicking the content shape) will be displayed instead of a blank screen or a generic spinner, reducing perceived wait time.
+    \item \textbf{Unit Testing (Vitest + React Testing Library)} \\
+        Used for testing individual components and utility functions.
+    \item \textbf{Integration Testing (Vitest)} \\
+        Focuses on the interaction between multiple components and hooks (TanStack Query).
+    \item \textbf{End-to-End (E2E) Testing (Playwright)} \\
+        Simulates real user workflows for both Celebrants and Guests.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Guest Session Management}
+Since guests do not have a traditional account, their identity is tracked via a secure session mechanism.
+
+\begin{itemize}
+    \item \textbf{Cookie-Based Identity} \\
+        Upon providing an email, the backend issues a \texttt{guest\_session} cookie (\texttt{HttpOnly}, \texttt{Secure}, \texttt{SameSite=Lax}).
+    \item \textbf{Persistence} \\
+        The session is tied to the browser. If a guest returns to the same list from the same browser, they will automatically see their claimed items highlighted. If the cookie is expired, the guest simply needs to re-enter their email on the access page to restore their session.
 \end{itemize}

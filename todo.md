@@ -1,2 +1,0 @@
-- frontend
-    - gestire browser non supportati.

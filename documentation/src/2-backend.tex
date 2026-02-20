@@ -57,6 +57,10 @@ The database schema is designed to support the relationships between Celebrants,
             \item \texttt{id}: UUID, Primary Key
             \item \texttt{email}: String, unique, required
             \item \texttt{password}: String, hashed, required
+            \item \texttt{resetToken}: String, optional, unique (for password recovery)
+            \item \texttt{resetTokenExpires}: Timestamp, optional
+            \item \texttt{createdAt}: Timestamp, default: now
+            \item \texttt{updatedAt}: Timestamp, auto-update
         \end{itemize}
     \item GiftList: Represents a specific event's wish list.
         \begin{itemize}
@@ -64,6 +68,9 @@ The database schema is designed to support the relationships between Celebrants,
             \item \texttt{userId}: Foreign Key to User
             \item \texttt{slug}: String, unique. Automatically generated from the name.
             \item \texttt{name}: String, required
+            \item \texttt{deletedAt}: Timestamp, optional (Soft delete)
+            \item \texttt{createdAt}: Timestamp, default: now
+            \item \texttt{updatedAt}: Timestamp, auto-update
         \end{itemize}
     \item GiftItem: Represents an individual gift.
         \begin{itemize}
@@ -74,25 +81,41 @@ The database schema is designed to support the relationships between Celebrants,
             \item \texttt{url}: String, optional
             \item \texttt{status}: Enum (\texttt{AVAILABLE}, \texttt{CLAIMED}), required, default: \texttt{AVAILABLE}
             \item \texttt{preference}: Enum (\texttt{LOW}, \texttt{MEDIUM}, \texttt{HIGH}), required, default: \texttt{MEDIUM}
+            \item \texttt{deletedAt}: Timestamp, optional (Soft delete)
+            \item \texttt{createdAt}: Timestamp, default: now
+            \item \texttt{updatedAt}: Timestamp, auto-update
         \end{itemize}
     \item GuestAccess: Links a guest's email to a specific list for notification purposes.
         \begin{itemize}
             \item \texttt{id}: UUID, Primary Key
             \item \texttt{listId}: Foreign Key to GiftList
             \item \texttt{email}: String, required
+            \item \texttt{language}: String (e.g., 'en', 'it'), required. Used for notification emails.
+            \item \texttt{createdAt}: Timestamp, default: now
             \item A unique constraint should be on \texttt{(listId, email)}.
         \end{itemize}
     \item GuestClaim: A record linking a \texttt{GiftItem} to a \texttt{GuestAccess} record.
         \begin{itemize}
             \item \texttt{itemId}: Foreign Key to GiftItem, Primary Key (ensures an item is claimed only once)
             \item \texttt{guestId}: Foreign Key to GuestAccess
+            \item \texttt{createdAt}: Timestamp, default: now
         \end{itemize}
 \end{itemize}
 
-\subsection{Deletion Strategy (Soft Deletes)}
-To ensure data integrity and preserve history, the application will adopt a soft-delete strategy for all major records (including Users, GiftLists, and GiftItems). Instead of physically removing records from the database, a \texttt{deletedAt} timestamp will be added to the relevant models.
+\subsection{Deletion Strategy and Data Retention}
+The application balances the need for data recovery with privacy and resource optimization through a two-tier deletion strategy.
 
-When an entity is "deleted," this timestamp will be set. All API queries for retrieving data must be filtered to exclude records where \texttt{deletedAt} is not null, unless explicitly requested (e.g., by an administrator). This approach simplifies data recovery and maintains the relational structure.
+\subsubsection{Soft Deletes}
+To ensure data integrity and preserve history during active usage, the application adopts a soft-delete strategy for records manually removed by users (Celebrants). Instead of physically removing records, a \texttt{deletedAt} timestamp is set. API queries exclude these records by default.
+
+\subsubsection{Automatic Expiration (Hard Delete)}
+To prevent the database from growing indefinitely and to comply with data protection principles, an automatic cleanup process is implemented:
+\begin{itemize}
+    \item \textbf{Inactive Lists}: Any \texttt{GiftList} that has not been updated for more than 6 months (based on \texttt{updatedAt}) is considered expired. These lists, along with all their associated \texttt{GiftItem}s, \texttt{GuestAccess} records, and \texttt{GuestClaim}s, are permanently removed from the database.
+    \item \textbf{Guest Data}: When a list is deleted (manually or automatically), its associated \texttt{GuestAccess} records are removed. The system periodically identifies guest emails that are no longer associated with any active or soft-deleted list and purges them to ensure no unnecessary personal identifiable information (PII) is retained.
+\end{itemize}
+
+A scheduled background task (cron job) will execute these cleanup operations daily during low-traffic hours.
 
 \subsection{Data Validation Rules}
 To ensure data integrity and security, the following validation rules will be enforced at the API level.
@@ -121,7 +144,7 @@ To ensure data integrity and security, the following validation rules will be en
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{API Design}
-The backend will expose a RESTful API.
+The backend will expose a RESTful API versioned under the \texttt{/api/v1} prefix.
 
 \subsection{Architectural Choice}
 The decision to use a RESTful architecture over alternatives like gRPC or GraphQL is based on several key factors:
@@ -145,47 +168,174 @@ The API uses standard HTTP status codes to indicate the success or failure of a 
 }
 \end{verbatim}
 
+\subsubsection{Detailed Error Codes}
+The following specific error codes are used to provide granular feedback to the client:
+\begin{itemize}
+    \item \texttt{AUTH\_INVALID\_CREDENTIALS}: The email or password provided is incorrect.
+    \item \texttt{AUTH\_EMAIL\_ALREADY\_EXISTS}: Attempted to register with an email that is already in use.
+    \item \texttt{AUTH\_TOKEN\_EXPIRED}: The provided JWT or reset token has expired.
+    \item \texttt{LIST\_NOT\_FOUND}: The requested list slug does not exist or has been deleted.
+    \item \texttt{ITEM\_NOT\_FOUND}: The requested item ID does not exist in the specified list.
+    \item \texttt{ITEM\_ALREADY\_CLAIMED}: Attempted to claim an item that is no longer \texttt{AVAILABLE}.
+    \item \texttt{ITEM\_NOT\_CLAIMED\_BY\_YOU}: Attempted to unclaim an item that was claimed by a different guest.
+    \item \texttt{VALIDATION\_ERROR}: The request payload failed schema validation (e.g., missing fields, invalid formats).
+\end{itemize}
+
 \subsubsection{Common Status Codes}
 \begin{itemize}
-    \item \texttt{400 Bad Request}: The request was malformed, such as containing invalid JSON or failing validation rules.
-    \item \texttt{401 Unauthorized}: Authentication is required and has failed or has not yet been provided.
-    \item \texttt{403 Forbidden}: The authenticated user does not have permission for the requested action.
-    \item \texttt{404 Not Found}: The requested resource could not be found.
-    \item \texttt{409 Conflict}: The request could not be processed because of a conflict in the current state of the resource (e.g., an item is already claimed).
-    \item \texttt{500 Internal Server Error}: An unexpected error occurred on the server.
+    \item \texttt{400 Bad Request}: The request was malformed or failed validation.
+    \item \texttt{401 Unauthorized}: Authentication is required and has failed.
+    \item \texttt{403 Forbidden}: Permission denied for the requested action.
+    \item \texttt{404 Not Found}: The resource could not be found.
+    \item \texttt{409 Conflict}: Conflict with the current state (e.g., item already claimed).
+    \item \texttt{500 Internal Server Error}: Unexpected server error.
 \end{itemize}
 
 \subsection{Authentication and Public Routes}
-These routes handle celebrant authentication and guest operations.
+These routes handle celebrant authentication and guest operations. All routes are prefixed with \texttt{/api/v1}.
 \begin{itemize}
-    \item \texttt{POST /api/auth/register} \\
-    Registers a new Celebrant account. Requires an \texttt{email} and \texttt{password}.
-    \item \texttt{POST /api/auth/login} \\
-    Authenticates a Celebrant using \texttt{email} and \texttt{password}, returning a JWT upon success.
-    \item \texttt{POST /api/lists/:slug/access} \\
-    Registers a guest's email for a specific list. This is a mandatory step before interacting with the list. The backend stores the email and sets a session cookie to identify the guest. On subsequent visits from the same browser, this cookie allows for automatic recognition. If accessing from a different browser or after the cookie has expired, the guest must provide their email again to be linked to their previous activity on the list.
-    \item \texttt{GET /api/lists/:slug} \\
-    Retrieves the gift list and all items. Requires a valid guest session, identified via the session cookie.
-    \item \texttt{GET /api/lists/:slug/my-claims} \\
-    Allows an authenticated guest (identified via session cookie) to retrieve a list containing only the items they have personally claimed.
-    \item \texttt{POST /api/items/:id/claim} \\
-    Allows a guest to claim an item. The guest identity is inferred from their active session cookie.
-    \item \texttt{POST /api/items/:id/unclaim} \\
-    Allows a guest to un-claim an item they previously claimed, making it available again. The guest identity is inferred from their active session cookie.
+    \item \texttt{POST /auth/register} \\
+    Registers a new Celebrant account.
+    \item \texttt{POST /auth/login} \\
+    Authenticates a Celebrant and returns a JWT.
+    \item \texttt{POST /auth/forgot-password} \\
+    Initiates the password reset process. Sends an email with a reset token if the email exists.
+    \item \texttt{POST /auth/reset-password} \\
+    Sets a new password using a valid reset token.
+    \item \texttt{POST /lists/:slug/access} \\
+    Registers or identifies a guest's email for a specific list. If the email already exists for this list, it refreshes the guest session. The backend stores the email and sets a secure, \texttt{HttpOnly} session cookie.
+    \item \texttt{GET /lists/:slug} \\
+    Retrieves the gift list and all items. Requires a valid guest session. \textbf{Note:} For guests, this response includes the \texttt{status} of each item to show what is available.
+    \item \texttt{GET /lists/:slug/my-claims} \\
+    Retrieves only the items claimed by the current guest.
+    \item \texttt{POST /items/:id/claim} \\
+    Allows a guest to claim an item.
+    \item \texttt{POST /items/:id/unclaim} \\
+    Allows a guest to unclaim an item they previously claimed.
 \end{itemize}
 
-\subsection{Protected Routes}
-These are the celebrant operations and require a valid JWT in the Authorization header.
+\subsection{Protected Routes (Celebrant Dashboard)}
+These require a valid JWT in the Authorization header.
 \begin{itemize}
-    \item \texttt{POST /api/lists} \\
-        Creates a new list. Requires a \texttt{name} in the request body. The backend automatically generates a URL-safe, unique \texttt{slug} from the name. If a slug collision occurs, a unique 5-character suffix is appended.
-    \item \texttt{POST /api/lists/:id/item} \\
-        Add a single new item to a list.
-    \item \texttt{PATCH /api/items/:id} \\
-        Allows a celebrant to update an existing item's details (e.g., name, description, url, preference).
-    \item \texttt{DELETE /api/items/:id} \\
-        Remove an item.
+    \item \texttt{GET /lists} \\
+        Retrieves all lists created by the authenticated Celebrant.
+    \item \texttt{POST /lists} \\
+        Creates a new list. Requires a \texttt{name}.
+    \item \texttt{GET /lists/:id/manage} \\
+        Retrieves the full details of a specific list for management. \textbf{Surprise Protection:} This route \textit{explicitly excludes} any information regarding the \texttt{status} (CLAIMED/AVAILABLE) or guest claims.
+    \item \texttt{DELETE /lists/:id} \\
+        Soft-removes an entire list. If items were claimed, notifications are triggered.
+    \item \texttt{POST /lists/:id/item} \\
+        Adds an item to a list.
+    \item \texttt{PATCH /items/:id} \\
+        Updates an item's details.
+    \item \texttt{DELETE /items/:id} \\
+        Soft-removes an item. Triggers a notification if the item was claimed.
 \end{itemize}
+
+\subsection{Slug Generation and Collision Strategy}
+Slugs are URL-friendly strings generated from the list name.
+To handle cases where multiple users choose the same name:
+\begin{enumerate}
+    \item The system generates the base slug.
+    \item It checks for existence in the database.
+    \item If a collision occurs, a short random alphanumeric suffix (e.g., \texttt{-x4k2}) is appended.
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{API Specification (DTOs)}
+To ensure consistency between frontend and backend, we define the following Data Transfer Objects.
+
+\subsection{Authentication}
+\begin{itemize}
+    \item \textbf{Login Request}
+\begin{verbatim}
+{
+  "email": "user@example.com",
+  "password": "SecurePassword123!"
+}
+\end{verbatim}
+    \item \textbf{Login Response (200 OK)}
+\begin{verbatim}
+{
+  "token": "eyJhbG...",
+  "user": {
+    "id": "uuid-v4",
+    "email": "user@example.com"
+  }
+}
+\end{verbatim}
+\end{itemize}
+
+\subsection{Gift Lists}
+\begin{itemize}
+    \item \textbf{Get List Response (200 OK)}
+\begin{verbatim}
+{
+  "id": "uuid-v4",
+  "name": "Birthday 2026",
+  "slug": "birthday-2026",
+  "items": [
+    {
+      "id": "uuid-v4",
+      "name": "Mechanical Keyboard",
+      "description": "Blue switches preferred",
+      "url": "https://amazon.com/...",
+      "status": "AVAILABLE",
+      "preference": "HIGH",
+      "isClaimedByMe": false
+    }
+  ]
+}
+\end{verbatim}
+    \item \textbf{Add Item Request}
+\begin{verbatim}
+{
+  "name": "Lego Star Wars",
+  "description": "The Millennium Falcon set",
+  "url": "https://lego.com/...",
+  "preference": "MEDIUM"
+}
+\end{verbatim}
+    \item \textbf{Update Item Request (PATCH)}
+\begin{verbatim}
+{
+  "name": "Updated Lego Set",
+  "description": "Updated description",
+  "url": "https://new-url.com",
+  "preference": "HIGH"
+}
+\end{verbatim}
+    \item \textbf{Guest Access Request}
+\begin{verbatim}
+{
+  "email": "guest@example.com"
+}
+\end{verbatim}
+\end{itemize}
+
+\subsection{Error Response Example}
+\begin{verbatim}
+{
+  "error": {
+    "code": "ITEM_ALREADY_CLAIMED",
+    "message": "This item has already been claimed by another guest."
+  }
+}
+\end{verbatim}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Security}
+\subsection{Rate Limiting}
+To protect the application from brute-force attacks and DDoS, the following rate limits are applied:
+\begin{itemize}
+    \item \textbf{Auth Routes}: 5 requests per 15 minutes per IP.
+    \item \textbf{Public Guest Access}: 20 requests per minute per IP.
+    \item \textbf{General API}: 100 requests per minute per IP.
+\end{itemize}
+
+\subsection{CORS Policy}
+The API will strictly enforce CORS, allowing requests only from the verified frontend domain.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Handling Concurrency}
@@ -199,10 +349,49 @@ To prevent the race condition when two guests from claiming the same item simult
 \end{enumerate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Notification}
+\section{Notification Service}
+The notification service is designed to be resilient and non-blocking.
+\begin{itemize}
+    \item \textbf{Asynchronous Processing}: Notifications are handled asynchronously to prevent API latency. If an item is deleted, the system schedules the email task and immediately returns a success response to the user.
+    \item \textbf{Reliability}: In case of SMTP failure, the system will attempt to retry the delivery up to 3 times with exponential backoff.
+    \item \textbf{Privacy}: Guest emails are only used for required system notifications and are never shared or used for marketing.
+\end{itemize}
+
 If a Celebrant deletes an item that is already \texttt{CLAIMED}:
 \begin{enumerate}
     \item The backend identifies the associated \texttt{GuestClaim}.
-    \item Before completing the deletion, the system triggers an email notification service (e.g., Nodemailer) to inform the guest.
-    \item The item is then soft-deleted, following the application-wide strategy.
+    \item The system schedules an email notification via the notification service.
+    \item The item is then soft-deleted (\texttt{deletedAt} is set).
 \end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Email Templates}
+To ensure a consistent and professional communication with users, the following email templates are defined. All emails will be sent in the user's preferred language (English or Italian).
+
+\subsection{Item Removal Notification (Guest)}
+Sent when a celebrant removes an item that the guest has already claimed.
+\begin{itemize}
+    \item \textbf{Subject (EN)}: Important update regarding your gift for [List Name]
+    \item \textbf{Subject (IT)}: Aggiornamento importante sul tuo regalo per [List Name]
+    \item \textbf{Body Content}:
+        \begin{quote}
+            Hi, \\
+            We are writing to inform you that the item "[Item Name]" has been removed from the gift list "[List Name]" by the celebrant. \\
+            If you have already purchased this gift, please be aware that it is no longer on their wish list. \\
+            You can visit the list again to see if there are other items you would like to claim: [List URL].
+        \end{quote}
+\end{itemize}
+
+\subsection{Password Reset (Celebrant)}
+Sent when a celebrant requests a password recovery.
+\begin{itemize}
+    \item \textbf{Subject (EN)}: Password Reset Request for Gift List
+    \item \textbf{Subject (IT)}: Richiesta di reset password per Gift List
+    \item \textbf{Body Content}:
+        \begin{quote}
+            Hi, \\
+            We received a request to reset the password for your account. Click the link below to set a new password. This link will expire in 15 minutes. \\
+            \[Reset Link with Token\] \\
+            If you did not request this, you can safely ignore this email.
+        \end{quote}
+\end{itemize}
