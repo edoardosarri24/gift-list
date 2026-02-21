@@ -176,18 +176,21 @@ export const getListPublic = async (req: Request, res: Response, next: NextFunct
             throw { status: 404, code: ErrorCodes.LIST_NOT_FOUND, message: 'List not found' };
         }
 
-        const publicItems = list.items.map((item: any) => {
-            const isClaimedByMe = item.claim?.guestId === guestId;
-            return {
-                id: item.id,
-                name: item.name,
-                description: item.description,
-                url: item.url,
-                status: item.status,
-                preference: item.preference,
-                isClaimedByMe
-            };
-        });
+        const publicItems = list.items
+            .map((item: any) => {
+                const isClaimedByMe = item.claim?.guestId === guestId;
+                return {
+                    id: item.id,
+                    name: item.name,
+                    description: item.description,
+                    url: item.url,
+                    status: item.status,
+                    preference: item.preference,
+                    isClaimedByMe
+                };
+            })
+            // Guest should only see available items or items they claimed themselves
+            .filter((item: any) => item.status === 'AVAILABLE' || item.isClaimedByMe);
 
         res.json({ id: list.id, name: list.name, slug: list.slug, imageUrl: list.imageUrl, items: publicItems });
     } catch (err) {

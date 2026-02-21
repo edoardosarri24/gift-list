@@ -4,9 +4,12 @@ import { RegisterForm } from './RegisterForm';
 import { useAuth } from '../../hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import styles from './Auth.module.css';
+import { useLanguage } from '../../i18n/LanguageContext';
+import { LanguageToggle } from '../../components/LanguageToggle';
 
 export const LandingPage = () => {
     const { user, isLoading } = useAuth();
+    const { t } = useLanguage();
     const [isLogin, setIsLogin] = useState(true);
 
     if (isLoading) return null; // or a full screen spinner
@@ -14,8 +17,9 @@ export const LandingPage = () => {
 
     return (
         <div className={styles.landing}>
-            <h1 className={styles.title}>Gift List</h1>
-            <p className={styles.subtitle}>Crea la tua lista dei desideri perfetta e condividila facilmente, mantenendo l'effetto sorpresa.</p>
+            <LanguageToggle absolute />
+            <h1 className={styles.title}>{t('landingTitle')}</h1>
+            <p className={styles.subtitle}>{t('landingSubtitle')}</p>
 
             {isLogin ? (
                 <LoginForm onToggle={() => setIsLogin(false)} />

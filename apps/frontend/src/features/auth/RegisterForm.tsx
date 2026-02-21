@@ -9,9 +9,11 @@ import api from '../../lib/axios';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import styles from './Auth.module.css';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 export const RegisterForm = ({ onToggle }: { onToggle: () => void }) => {
     const { login } = useAuth();
+    const { t } = useLanguage();
     const navigate = useNavigate();
     const [serverError, setServerError] = useState('');
 
@@ -50,19 +52,19 @@ export const RegisterForm = ({ onToggle }: { onToggle: () => void }) => {
     return (
         <div className={styles.formContainer}>
             <Card>
-                <h2 style={{ marginBottom: '24px', textAlign: 'center' }}>Crea Account</h2>
+                <h2 style={{ marginBottom: '24px', textAlign: 'center' }}>{t('createAccount')}</h2>
                 {serverError && <div className={styles.serverError}>{serverError}</div>}
 
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <Input
-                        label="Email"
+                        label={t('emailLabel')}
                         type="email"
                         placeholder="festeggiato@esempio.com"
                         {...register('email')}
                         error={errors.email?.message}
                     />
                     <Input
-                        label="Password"
+                        label={t('passwordLabel')}
                         type="password"
                         placeholder="••••••••"
                         {...register('password')}
@@ -70,13 +72,13 @@ export const RegisterForm = ({ onToggle }: { onToggle: () => void }) => {
                     />
 
                     <Button type="submit" isLoading={isSubmitting} style={{ width: '100%' }}>
-                        Registrati
+                        {t('registerButton')}
                     </Button>
                 </form>
 
                 <div className={styles.toggle}>
-                    Hai già un account?
-                    <button className={styles.toggleLink} onClick={onToggle}>Accedi</button>
+                    {t('alreadyHaveAccount')}
+                    <button className={styles.toggleLink} onClick={onToggle}>{t('loginNow')}</button>
                 </div>
             </Card>
         </div>

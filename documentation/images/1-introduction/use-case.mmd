@@ -8,12 +8,18 @@ flowchart LR
         direction TB
 
         %% Celebrant Use Cases
-        UC_C_Auth([Register/Login])
+        UC_C_Auth([Register / Login])
         UC_C_CreateList([Create Gift List])
+        UC_C_EditList([Edit Gift List])
         UC_C_DeleteList([Delete Gift List])
+        UC_C_ShareList([Share List Link])
+        UC_C_PreviewList([Preview Public List])
+        
         UC_C_AddItem([Add Item])
         UC_C_EditItem([Edit Item])
         UC_C_RemoveItem([Remove Item])
+        
+        UC_C_UploadImage([Upload List Image])
         UC_C_SetPref([Set Item Preference])
 
         %% Guest Use Cases
@@ -22,34 +28,43 @@ flowchart LR
         UC_G_Claim([Claim Item])
         UC_G_Unclaim([Unclaim Item])
         UC_G_ViewMyClaims([View My Claims Summary])
-        UC_G_Notify([Receive Removal Notification])
+        UC_G_ChangeLang([Change Language])
+        
+        %% Future/Disabled Use Cases
+        %% UC_G_Notify([Receive Email Notification - Disabled])
     end
 
     %% Actor to Use Case Relationships
     C --- UC_C_Auth
     C --- UC_C_CreateList
+    C --- UC_C_EditList
     C --- UC_C_DeleteList
+    C --- UC_C_ShareList
+    C --- UC_C_PreviewList
     C --- UC_C_AddItem
     C --- UC_C_EditItem
     C --- UC_C_RemoveItem
-    C --- UC_C_SetPref
 
     G --- UC_G_ProvideEmail
     G --- UC_G_ViewList
     G --- UC_G_Claim
     G --- UC_G_Unclaim
     G --- UC_G_ViewMyClaims
-    G --- UC_G_Notify
+    G --- UC_G_ChangeLang
 
     %% Inter-Use Case Relationships
+    UC_C_CreateList -.->|include| UC_C_UploadImage
+    UC_C_EditList -.->|include| UC_C_UploadImage
+    
     UC_C_AddItem -.->|include| UC_C_SetPref
     UC_C_EditItem -.->|include| UC_C_SetPref
+    
     UC_G_ProvideEmail -.->|precondition| UC_G_ViewList
     UC_G_ProvideEmail -.->|precondition| UC_G_ViewMyClaims
+    
     UC_G_ViewList --> UC_G_Claim
     UC_G_ViewList --> UC_G_Unclaim
-    UC_C_RemoveItem -.->|notifies| UC_G_Notify
 
     %% Styling
     style C fill:#f9f,stroke:#333,stroke-width:2px
-    style G fill:#f9f,stroke:#333,stroke-width:2px
+    style G fill:#bbf,stroke:#333,stroke-width:2px
