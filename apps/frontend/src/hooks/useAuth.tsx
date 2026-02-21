@@ -5,7 +5,7 @@ import api, { setAuthToken } from '../lib/axios';
 interface AuthContextType {
     user: UserDTO | null;
     login: (token: string, user: UserDTO) => void;
-    logout: () => void;
+    logout: () => Promise<void>;
     isLoading: boolean;
 }
 
@@ -48,10 +48,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(u);
     };
 
-    const logout = () => {
-        setAuthToken(null);
-        setUser(null);
-        // Call server logout to clear hard cookie if implemented
+    const logout = async () => {
+        try {
+            await api.post('/auth/logout');
+        } catch (err) {
+            console.warn('Backend logout failed', err);
+        } finally {
+            setAuthToken(null);
+            setUser(null);
+        }
     };
 
     return (

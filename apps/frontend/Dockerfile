@@ -8,6 +8,11 @@ COPY packages/shared packages/shared
 COPY apps/frontend apps/frontend
 RUN pnpm install
 
+# Build shared first
+WORKDIR /app/packages/shared
+RUN pnpm build
+
+# Build frontend
 WORKDIR /app/apps/frontend
 RUN pnpm build
 

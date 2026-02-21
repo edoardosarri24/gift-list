@@ -3,13 +3,26 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--spacing-1);
-    font-weight: 500;
-    font-size: 14px;
-    padding: var(--spacing-2) var(--spacing-3);
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    border: 1px solid transparent;
-    outline: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid transparent;
+  outline: none;
+}
+
+.sm {
+  font-size: 12px;
+  padding: 4px var(--spacing-2);
+}
+
+.md {
+  font-size: 14px;
+  padding: var(--spacing-2) var(--spacing-3);
+}
+
+.lg {
+  font-size: 16px;
+  padding: var(--spacing-3) var(--spacing-4);
 }
 
 .button:disabled {

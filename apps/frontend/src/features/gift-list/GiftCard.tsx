@@ -1,4 +1,4 @@
-import React from 'react';
+import { FC } from 'react';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { GiftItemDTO } from '@gift-list/shared';
@@ -10,7 +10,7 @@ interface GiftCardProps {
     isLoading?: boolean;
 }
 
-export const GiftCard: React.FC<GiftCardProps> = ({ item, onClaim, onUnclaim, isLoading }) => {
+export const GiftCard: FC<GiftCardProps> = ({ item, onClaim, onUnclaim, isLoading }) => {
     const isAvailable = item.status === 'AVAILABLE';
     const isClaimedByMe = item.isClaimedByMe;
     const isClaimedByOther = !isAvailable && !isClaimedByMe;

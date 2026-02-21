@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CreateGiftItemInput, CreateGiftItemSchema, GiftItemDTO, GiftListDTO } from '@gift-list/shared';
+import { CreateGiftItemInput, CreateGiftItemSchema, GiftListDTO } from '@gift-list/shared';
 import api from '../../lib/axios';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
@@ -70,7 +70,7 @@ export const ManageListPage = () => {
             {showAddForm && (
                 <Card style={{ marginBottom: '32px' }}>
                     <h3>Add New Gift</h3>
-                    <form onSubmit={handleSubmit((data) => addItemMutation.mutate(data))} style={{ marginTop: '16px' }}>
+                    <form onSubmit={handleSubmit((data: any) => addItemMutation.mutate(data))} style={{ marginTop: '16px' }}>
                         <Input label="Name" placeholder="e.g. Nintendo Switch" {...register('name')} error={errors.name?.message} />
                         <Input label="Description (Optional)" placeholder="Any specific details" {...register('description')} error={errors.description?.message} />
                         <Input label="URL (Optional)" placeholder="https://..." {...register('url')} error={errors.url?.message} />
@@ -100,7 +100,7 @@ export const ManageListPage = () => {
                     </Card>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        {list.items.map(item => (
+                        {list.items.map((item: any) => (
                             <Card key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <div>
                                     <h4 style={{ margin: 0 }}>{item.name} <span style={{ fontSize: '12px', fontWeight: 'normal', color: 'gray' }}>({item.preference})</span></h4>
@@ -108,7 +108,7 @@ export const ManageListPage = () => {
                                     {item.url && <a href={item.url} target="_blank" rel="noreferrer" style={{ fontSize: '14px', wordBreak: 'break-all' }}>Link</a>}
                                 </div>
                                 <button
-                                    onClick={() => { if (window.confirm('Are you sure?')) deleteItemMutation.mutate(item.id) }}
+                                    onClick={() => { if (window.confirm('Are you sure?')) deleteItemMutation.mutate(item.id as string) }}
                                     style={{ background: 'none', border: 'none', color: 'var(--color-secondary)', cursor: 'pointer' }}
                                 >
                                     <Trash2 size={20} />

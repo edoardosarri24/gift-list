@@ -131,7 +131,7 @@ The application is configured using environment variables. These variables are e
 To balance security and usability, the application implements a dual-token system:
 \begin{itemize}
     \item \textbf{Access Token (JWT)}: Short-lived (15 minutes). Sent in the \texttt{Authorization} header.
-    \item \textbf{Refresh Token}: Long-lived (7 days). Stored in a \texttt{HttpOnly}, \texttt{Secure} cookie.
+    \item \textbf{Refresh Token}: Long-lived (7 days). Stored in a \texttt{HttpOnly} cookie. In production, this cookie is marked as \texttt{Secure}.
 \end{itemize}
 When the Access Token expires, the frontend automatically calls a \texttt{POST /auth/refresh} endpoint, which verifies the Refresh Token and issues a new Access Token. This ensures that the Celebrant stays logged in while they are actively using the dashboard.
 
@@ -298,6 +298,8 @@ These routes handle celebrant authentication and guest operations. All routes ar
     Registers a new Celebrant account.
     \item \texttt{POST /auth/login} \\
     Authenticates a Celebrant and returns a JWT.
+    \item \texttt{POST /auth/logout} \\
+    Clears session and refresh token cookies.
     \item \texttt{POST /auth/refresh} \\
     Exchanges a valid Refresh Token (from cookie) for a new Access Token.
     \item \texttt{POST /auth/forgot-password} \\

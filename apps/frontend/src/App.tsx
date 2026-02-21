@@ -1,5 +1,4 @@
 import { Routes, Route } from 'react-router-dom';
-import React from 'react';
 import { LandingPage } from './features/auth/LandingPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { CreateListForm } from './features/dashboard/CreateListForm';

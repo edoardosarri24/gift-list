@@ -59,7 +59,7 @@ export const getListManage = async (req: Request, res: Response, next: NextFunct
         }
 
         // Surprise Protection: Masking the actual status for the Celebrant
-        const maskedItems = list.items.map((item) => ({
+        const maskedItems = list.items.map((item: any) => ({
             ...item,
             status: 'AVAILABLE',
             claim: undefined
@@ -111,10 +111,12 @@ export const createGuestAccess = async (req: Request, res: Response, next: NextF
         });
 
         const sessionPayload = Buffer.from(JSON.stringify({ id: access.id, email })).toString('base64');
+        console.log(`[Guest] Setting session cookie for ${email}, path: /`);
         res.cookie('guest_session', sessionPayload, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: false, // Force false for local dev
             sameSite: 'lax',
+            path: '/',
             maxAge: 30 * 24 * 60 * 60 * 1000,
         });
 
@@ -145,7 +147,7 @@ export const getListPublic = async (req: Request, res: Response, next: NextFunct
             throw { status: 404, code: ErrorCodes.LIST_NOT_FOUND, message: 'List not found' };
         }
 
-        const publicItems = list.items.map((item) => {
+        const publicItems = list.items.map((item: any) => {
             const isClaimedByMe = item.claim?.guestId === guestId;
             return {
                 id: item.id,

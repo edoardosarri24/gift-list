@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../utils/prisma';
 import { CreateGiftItemInput, UpdateGiftItemInput, ErrorCodes } from '@gift-list/shared';
+import { sendClaimedItemRemovalNotification } from '../services/email.service';
 
 export const addItemToList = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -65,16 +66,26 @@ export const deleteItem = async (req: Request, res: Response, next: NextFunction
 
         const item = await prisma.giftItem.findFirst({
             where: { id: itemId, deletedAt: null },
-            include: { list: true }
+            include: {
+                list: true,
+                claim: {
+                    include: { guest: true }
+                }
+            }
         });
 
         if (!item || item.list.userId !== userId) {
             throw { status: 404, code: ErrorCodes.ITEM_NOT_FOUND, message: 'Item not found' };
         }
 
-        if (item.status === 'CLAIMED') {
-            // TODO: schedule email notification to guest
-            console.log(`[Notification] Item ${item.id} claimed but deleted. Triggering email notification...`);
+        if (item.status === 'CLAIMED' && item.claim) {
+            // Asynchronously send notification to avoid blocking the response
+            sendClaimedItemRemovalNotification(
+                item.claim.guest.email,
+                item.name,
+                item.list.name,
+                item.claim.guest.language
+            );
         }
 
         await prisma.giftItem.update({

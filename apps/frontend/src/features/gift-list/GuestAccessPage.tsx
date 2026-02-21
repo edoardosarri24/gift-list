@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { GuestAccessInput, GuestAccessSchema } from '@gift-list/shared';
@@ -10,7 +10,6 @@ import { Button } from '../../components/Button';
 
 export const GuestAccessPage = () => {
     const { slug } = useParams<{ slug: string }>();
-    const navigate = useNavigate();
     const [error, setError] = useState('');
 
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<GuestAccessInput>({
@@ -33,18 +32,18 @@ export const GuestAccessPage = () => {
         <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)' }}>
             <div style={{ width: '100%', maxWidth: '400px', padding: '24px' }}>
                 <Card>
-                    <h2 style={{ textAlign: 'center', marginBottom: '16px' }}>Access Gift List</h2>
+                    <h2 style={{ textAlign: 'center', marginBottom: '16px' }}>Accedi alla Lista Regali</h2>
                     <p style={{ textAlign: 'center', color: 'gray', marginBottom: '24px', fontSize: '14px' }}>
-                        Please provide your email to view the gift list. This is only used to notify you if a claimed item is removed.
+                        Inserisci la tua email per visualizzare la lista. Ti informeremo solo se un regalo da te prenotato viene rimosso.
                     </p>
 
                     {error && <div style={{ color: 'red', marginBottom: '16px', fontSize: '14px', textAlign: 'center' }}>{error}</div>}
 
                     <form onSubmit={handleSubmit(onSubmit)}>
                         <Input
-                            label="Email Address"
+                            label="Indirizzo Email"
                             type="email"
-                            placeholder="guest@example.com"
+                            placeholder="ospite@esempio.com"
                             {...register('email')}
                             error={errors.email?.message}
                         />
@@ -53,7 +52,7 @@ export const GuestAccessPage = () => {
                             {...register('language')}
                         />
                         <Button type="submit" isLoading={isSubmitting} style={{ width: '100%' }}>
-                            View List
+                            Visualizza Lista
                         </Button>
                     </form>
                 </Card>

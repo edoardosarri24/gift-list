@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../utils/prisma';
 import { RegisterUserInput, LoginUserInput, ErrorCodes } from '@gift-list/shared';
@@ -39,7 +39,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
 
         res.cookie('refresh_token', refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: false, // Set to false for local dev flexibility
             sameSite: 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
@@ -73,7 +73,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 
         res.cookie('refresh_token', refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: false,
             sameSite: 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
@@ -116,4 +116,9 @@ export const refresh = async (req: Request, res: Response, next: NextFunction) =
     } catch (err) {
         next(err);
     }
+};
+export const logout = async (req: Request, res: Response) => {
+    res.clearCookie('refresh_token', { path: '/' });
+    res.clearCookie('guest_session', { path: '/' });
+    res.status(204).send();
 };

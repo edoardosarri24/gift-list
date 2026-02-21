@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/axios';
 import { GiftListDTO } from '@gift-list/shared';
@@ -22,7 +22,7 @@ export const PublicListPage = () => {
 
     const claimMutation = useMutation({
         mutationFn: (itemId: string) => api.post(`/items/${itemId}/claim`),
-        onMutate: (itemId) => setLoadingItemId(itemId),
+        onMutate: (itemId: string) => setLoadingItemId(itemId),
         onSettled: () => {
             setLoadingItemId(null);
             queryClient.invalidateQueries({ queryKey: ['public-list', slug] });
@@ -31,7 +31,7 @@ export const PublicListPage = () => {
 
     const unclaimMutation = useMutation({
         mutationFn: (itemId: string) => api.post(`/items/${itemId}/unclaim`),
-        onMutate: (itemId) => setLoadingItemId(itemId),
+        onMutate: (itemId: string) => setLoadingItemId(itemId),
         onSettled: () => {
             setLoadingItemId(null);
             queryClient.invalidateQueries({ queryKey: ['public-list', slug] });
@@ -60,12 +60,12 @@ export const PublicListPage = () => {
                 </div>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {list.items.map(item => (
+                    {list.items.map((item: any) => (
                         <GiftCard
                             key={item.id}
                             item={item}
-                            onClaim={(id) => claimMutation.mutate(id)}
-                            onUnclaim={(id) => unclaimMutation.mutate(id)}
+                            onClaim={(id: string) => claimMutation.mutate(id)}
+                            onUnclaim={(id: string) => unclaimMutation.mutate(id)}
                             isLoading={loadingItemId === item.id}
                         />
                     ))}

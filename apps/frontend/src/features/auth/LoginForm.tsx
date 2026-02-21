@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginUserInput, LoginUserSchema } from '@gift-list/shared';
@@ -26,7 +26,22 @@ export const LoginForm = ({ onToggle }: { onToggle: () => void }) => {
             login(res.data.token, res.data.user);
             navigate('/dashboard');
         } catch (err: any) {
-            setServerError(err.response?.data?.error?.message || 'Login failed');
+            if (err.response) {
+                const status = err.response.status;
+                const message = err.response.data?.error?.message;
+
+                if (status === 401) {
+                    setServerError('Credenziali non valide. Controlla email e password.');
+                } else if (status >= 400 && status < 500) {
+                    setServerError(message || 'Dati non validi. Riprova.');
+                } else {
+                    setServerError('Il server ha riscontrato un problema. Riprova più tardi.');
+                }
+            } else if (err.request) {
+                setServerError('Impossibile contattare il server. Controlla la tua connessione.');
+            } else {
+                setServerError('Si è verificato un errore imprevisto. Riprova.');
+            }
         }
     };
 
