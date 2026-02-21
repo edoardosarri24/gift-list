@@ -5,3 +5,4 @@
 - il colore dello sfondo deve essere beije come https://img.freepik.com/foto-gratuito/sfondo_53876-32173.jpg.
 - cosigli sull'app da parte degli utenti.
 - il festeggiato non deve avere il clicca facile sulla versione pubblica della lista.
+- impostazione lingua.

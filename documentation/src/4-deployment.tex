@@ -32,6 +32,7 @@ To ensure the database schema is up-to-date before the application starts, the A
 
 \subsection{Nginx Configuration for SPA}
 Since the Frontend is a Single Page Application (SPA) using React Router, the Nginx server must be configured to handle client-side routing correctly.
+\begin{itemize}
   \item \textbf{Fallback Strategy}: The Nginx configuration file (\texttt{nginx.conf}) must include a \texttt{try\_files} directive. This ensures that any request for a non-existent file (e.g., \texttt{/lists/my-list}) is internally redirected to \texttt{index.html}, allowing React Router to handle the URL. Additionally, the configuration includes a proxy block to route \texttt{/api/} requests to the backend service.
     \begin{verbatim}
     location / {

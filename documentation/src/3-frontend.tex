@@ -27,7 +27,9 @@ The frontend will be built as a Single Page Application (SPA) using the followin
     \item Styling \\
         CSS Modules with Vanilla CSS.
     \item Internationalization \\
-        \texttt{react-i18next}. To manage translations and user language preferences.
+        \texttt{react-i18next}. To manage translations and user language preferences. The app is fully localized in Italian and English.
+    \item Image Processing \\
+        \texttt{react-easy-crop} for an interactive visual cropping experience, and \texttt{heic2any} to seamlessly convert Apple HEIC formats to standard JPEG before upload.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -40,6 +42,16 @@ To ensure a high-quality user experience and data integrity, form management fol
         Validation errors are displayed in real-time as the user types, providing immediate corrective feedback.
     \item Submission Lifecycle \\
         Submit buttons transition to a "Loading" state during API calls, disabling further clicks to prevent duplicate submissions.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Image Uploading and Processing}
+A critical feature of the dashboard is the ability for celebrants to customize their lists with a representative image. To ensure a premium user experience and server compatibility, image processing is handled entirely client-side before transmission:
+\begin{itemize}
+    \item \textbf{Upload Methods}: Users can upload images via a native drag-and-drop file interface or by pasting an external image URL. 
+    \item \textbf{HEIC Conversion}: Apple devices natively capture photos in \texttt{.heic} format. The frontend automatically intercepts these files and converts them to \texttt{.jpg} using \texttt{heic2any} directly in the browser, ensuring universal compatibility without backend overhead.
+    \item \textbf{Interactive Cropping}: Uploaded or URL-imported images are loaded onto an interactive 1:1 circular canvas using \texttt{react-easy-crop}, allowing the user to precisely frame and zoom the picture.
+    \item \textbf{Data Transmission}: The final cropped image is generated as an optimized JPEG base64 Data URL, which is sent securely to the backend payload.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

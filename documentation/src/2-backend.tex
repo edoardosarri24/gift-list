@@ -15,6 +15,8 @@ The proposed technology stack for the backend includes:
         Prisma. To provide type-safe database access and simplify schema management.
     \item Authentication \\
         JSON Web Tokens (JWT) for stateless authentication of Celebrants, complemented by a Refresh Token strategy to ensure a seamless user experience without compromising security.
+    \item Payload Processing \\
+        Express is configured with an expanded 50MB \texttt{express.json} limit to natively parse and process cropped profile images sent directly as base64 string payloads.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -66,6 +68,7 @@ model GiftList {
   user         User          @relation(fields: [userId], references: [id])
   slug         String        @unique // Globally unique
   name         String
+  imageUrl     String?
   items        GiftItem[]
   guestAccess  GuestAccess[]
   deletedAt    DateTime?
@@ -155,6 +158,7 @@ The database schema is designed to support the relationships between Celebrants,
             \item \texttt{userId}: Foreign Key to User
             \item \texttt{slug}: String, unique. Automatically generated from the name.
             \item \texttt{name}: String, required
+            \item \texttt{imageUrl}: String, optional. Base64 profile image
             \item \texttt{deletedAt}: Timestamp, optional (Soft delete)
             \item \texttt{createdAt}: Timestamp, default: now
             \item \texttt{updatedAt}: Timestamp, auto-update
