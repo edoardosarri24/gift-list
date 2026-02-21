@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ItemStatus {
+  AVAILABLE
+  CLAIMED
+}
+
+enum PreferenceLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id                 String     @id @default(uuid())
+  email              String     @unique
+  password           String
+  resetToken         String?    @unique
+  resetTokenExpires  DateTime?
+  refreshToken       String?    @unique // For long-lived sessions
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  lists              GiftList[]
+}
+
+model GiftList {
+  id           String        @id @default(uuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  slug         String        @unique // Globally unique
+  name         String
+  items        GiftItem[]
+  guestAccess  GuestAccess[]
+  deletedAt    DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model GiftItem {
+  id          String          @id @default(uuid())
+  listId      String
+  list        GiftList        @relation(fields: [listId], references: [id])
+  name        String
+  description String?
+  url         String?
+  status      ItemStatus      @default(AVAILABLE)
+  preference  PreferenceLevel @default(MEDIUM)
+  claim       GuestClaim?
+  deletedAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model GuestAccess {
+  id        String       @id @default(uuid())
+  listId    String
+  list      GiftList     @relation(fields: [listId], references: [id])
+  email     String
+  language  String       @default("en")
+  claims    GuestClaim[]
+  createdAt DateTime     @default(now())
+
+  @@unique([listId, email])
+}
+
+model GuestClaim {
+  itemId    String      @id
+  item      GiftItem    @relation(fields: [itemId], references: [id])
+  guestId   String
+  guest     GuestAccess @relation(fields: [guestId], references: [id])
+  createdAt DateTime    @default(now())
+}

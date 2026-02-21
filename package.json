@@ -1,0 +1,17 @@
+{
+  "name": "gift-list",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Gift List Monorepo",
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint"
+  }
+}

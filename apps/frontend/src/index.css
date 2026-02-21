@@ -1,0 +1,32 @@
+/* The Elegant Indigo Palette via CSS Variables */
+:root {
+  --color-primary: #6366f1;
+  --color-secondary: #f43f5e;
+  --color-bg: #f8fafc;
+  --color-text: #1e293b;
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --font-family: 'Inter', system-ui, sans-serif;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 16px;
+  --spacing-4: 24px;
+  --spacing-5: 32px;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+h1, h2, h3, p {
+  margin: 0;
+}

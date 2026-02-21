@@ -1,0 +1,76 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: ./apps/frontend/Dockerfile
+    ports:
+      - "80:80"
+    restart: always
+    environment:
+      - VITE_API_BASE_URL=https://giftlist.yourdomain.com/api/v1
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  api:
+    build:
+      context: .
+      dockerfile: ./apps/backend/Dockerfile
+    ports:
+      - "3000:3000"
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db:5432/giftlist
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGIN=https://giftlist.yourdomain.com
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+    depends_on:
+      - db
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  db:
+    image: postgres:17-alpine
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=giftlist
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: always
+    command: tunnel run --token ${CLOUDFLARE_TOKEN}
+    depends_on:
+      - frontend
+      - api
+
+  db-backup:
+    image: prodrigestivill/postgres-backup-local
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data:ro
+      - ./backups:/backups
+    environment:
+      - POSTGRES_HOST=db
+      - SCHEDULE=@daily
+      - BACKUP_KEEP_DAYS=7
+
+volumes:
+  pgdata:
