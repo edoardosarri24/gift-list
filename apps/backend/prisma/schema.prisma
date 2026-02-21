@@ -36,6 +36,7 @@ model GiftList {
   user         User          @relation(fields: [userId], references: [id])
   slug         String        @unique // Globally unique
   name         String
+  imageUrl     String?
   items        GiftItem[]
   guestAccess  GuestAccess[]
   deletedAt    DateTime?

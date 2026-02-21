@@ -19,7 +19,7 @@ export const getCelebrantLists = async (req: Request, res: Response, next: NextF
 export const createList = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = (req as any).user.id;
-        const { name } = req.body as CreateGiftListInput;
+        const { name, imageUrl } = req.body as CreateGiftListInput;
 
         const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
         let slug = baseSlug;
@@ -34,7 +34,8 @@ export const createList = async (req: Request, res: Response, next: NextFunction
             data: {
                 userId,
                 name,
-                slug
+                slug,
+                imageUrl: imageUrl || null
             },
         });
 
@@ -66,6 +67,34 @@ export const getListManage = async (req: Request, res: Response, next: NextFunct
         }));
 
         res.json({ ...list, items: maskedItems });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const updateList = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as any).user.id;
+        const { slug } = req.params;
+        const { name, imageUrl } = req.body; // UpdateGiftListInput
+
+        const list = await prisma.giftList.findFirst({
+            where: { slug, userId, deletedAt: null }
+        });
+
+        if (!list) {
+            throw { status: 404, code: ErrorCodes.LIST_NOT_FOUND, message: 'List not found' };
+        }
+
+        const updatedList = await prisma.giftList.update({
+            where: { id: list.id },
+            data: {
+                name: name !== undefined ? name : list.name,
+                imageUrl: imageUrl !== undefined ? imageUrl : list.imageUrl
+            }
+        });
+
+        res.json(updatedList);
     } catch (err) {
         next(err);
     }
@@ -160,7 +189,7 @@ export const getListPublic = async (req: Request, res: Response, next: NextFunct
             };
         });
 
-        res.json({ id: list.id, name: list.name, slug: list.slug, items: publicItems });
+        res.json({ id: list.id, name: list.name, slug: list.slug, imageUrl: list.imageUrl, items: publicItems });
     } catch (err) {
         next(err);
     }

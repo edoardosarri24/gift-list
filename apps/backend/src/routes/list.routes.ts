@@ -1,14 +1,15 @@
 import { Router } from 'express';
 import { authenticateJWT, authenticateGuest } from '../middlewares/auth';
 import { validateBody } from '../middlewares/validate';
-import { CreateGiftListSchema, GuestAccessSchema } from '@gift-list/shared';
+import { CreateGiftListSchema, GuestAccessSchema, UpdateGiftListSchema } from '@gift-list/shared';
 import {
     getCelebrantLists,
     createList,
     getListManage,
     deleteList,
     createGuestAccess,
-    getListPublic
+    getListPublic,
+    updateList
 } from '../controllers/list.controller';
 
 const router = Router();
@@ -22,6 +23,7 @@ router.get('/:slug', authenticateGuest, getListPublic);
 router.get('/', authenticateJWT, getCelebrantLists);
 router.post('/', authenticateJWT, validateBody(CreateGiftListSchema), createList);
 router.get('/:slug/manage', authenticateJWT, getListManage);
+router.put('/:slug/manage', authenticateJWT, validateBody(UpdateGiftListSchema), updateList);
 router.delete('/:id', authenticateJWT, deleteList);
 // router.post('/:id/item', authenticateJWT, validateBody(CreateGiftItemSchema), addItem);
 

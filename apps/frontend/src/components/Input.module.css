@@ -5,26 +5,26 @@
 }
 
 .label {
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: var(--spacing-1);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
     color: var(--color-text);
 }
 
 .input {
-    padding: var(--spacing-2);
+    padding: 12px var(--spacing-3);
     border: 1px solid var(--color-border);
-    border-radius: var(--spacing-1);
-    font-size: 14px;
+    border-radius: var(--radius-md);
+    font-size: 15px;
     outline: none;
-    transition: border-color 0.2s;
+    transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
     background-color: var(--color-surface);
     color: var(--color-text);
 }
 
 .input:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
 }
 
 .inputError {
@@ -32,11 +32,11 @@
 }
 
 .inputError:focus {
-    box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.2);
+    box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
 }
 
 .errorMessage {
     color: var(--color-secondary);
-    font-size: 12px;
-    margin-top: var(--spacing-1);
+    font-size: 13px;
+    margin-top: 6px;
 }

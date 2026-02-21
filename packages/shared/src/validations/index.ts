@@ -18,10 +18,12 @@ export const LoginUserSchema = z.object({
 
 export const CreateGiftListSchema = z.object({
     name: z.string().min(3, 'Name must be at least 3 characters').max(50, 'Name cannot exceed 50 characters'),
+    imageUrl: z.string().optional().nullable().or(z.literal('')),
 });
 
 export const UpdateGiftListSchema = z.object({
     name: z.string().min(3, 'Name must be at least 3 characters').max(50, 'Name cannot exceed 50 characters').optional(),
+    imageUrl: z.string().optional().nullable().or(z.literal('')),
 });
 
 export const CreateGiftItemSchema = z.object({

@@ -58,6 +58,11 @@ export const PublicListPage = () => {
     return (
         <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
             <div style={{ marginBottom: '48px', textAlign: 'center' }}>
+                {list.imageUrl && (
+                    <div style={{ width: '120px', height: '120px', borderRadius: '50%', overflow: 'hidden', margin: '0 auto 24px', border: '4px solid var(--color-surface)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                        <img src={list.imageUrl} alt={list.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                )}
                 <h1 style={{ color: 'var(--color-primary)', fontSize: '2.5rem' }}>{list.name}</h1>
                 <p style={{ color: 'gray', marginTop: '8px' }}>Il regalo selezionato non sarà più visibile dagli altri invitati.</p>
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>

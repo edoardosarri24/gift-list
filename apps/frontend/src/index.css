@@ -1,17 +1,21 @@
-/* The Elegant Indigo Palette via CSS Variables */
 :root {
-  --color-primary: #6366f1;
-  --color-secondary: #f43f5e;
-  --color-bg: #f8fafc;
-  --color-text: #1e293b;
-  --color-surface: #ffffff;
-  --color-border: #e2e8f0;
-  --font-family: 'Inter', system-ui, sans-serif;
+  --color-primary: #007AFF;
+  --color-secondary: #FF3B30;
+  --color-success: #34C759;
+  --color-bg: #F5F5F7;
+  --color-text: #1D1D1F;
+  --color-text-secondary: #86868B;
+  --color-surface: #FFFFFF;
+  --color-border: rgba(0, 0, 0, 0.1);
+  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --spacing-1: 4px;
   --spacing-2: 8px;
   --spacing-3: 16px;
   --spacing-4: 24px;
   --spacing-5: 32px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
 }
 
 body {
@@ -27,6 +31,10 @@ body {
   box-sizing: border-box;
 }
 
-h1, h2, h3, p {
+h1,
+h2,
+h3,
+h4,
+p {
   margin: 0;
 }

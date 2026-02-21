@@ -2,31 +2,33 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--spacing-1);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  border: 1px solid transparent;
-  outline: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+    border: none;
+    outline: none;
 }
 
 .sm {
-  font-size: 12px;
-  padding: 4px var(--spacing-2);
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
 }
 
 .md {
-  font-size: 14px;
-  padding: var(--spacing-2) var(--spacing-3);
+    font-size: 15px;
+    padding: 10px 18px;
+    border-radius: var(--radius-md);
 }
 
 .lg {
-  font-size: 16px;
-  padding: var(--spacing-3) var(--spacing-4);
+    font-size: 17px;
+    padding: 14px 24px;
+    border-radius: var(--radius-md);
 }
 
 .button:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
@@ -36,7 +38,8 @@
 }
 
 .primary:hover:not(:disabled) {
-    background-color: #4f46e5;
+    background-color: #0062CC;
+    transform: scale(0.98);
 }
 
 .secondary {
@@ -45,26 +48,27 @@
 }
 
 .secondary:hover:not(:disabled) {
-    background-color: #e11d48;
+    background-color: #D73229;
+    transform: scale(0.98);
 }
 
 .outline {
     background-color: transparent;
-    border-color: var(--color-border);
+    border: 1px solid var(--color-border);
     color: var(--color-text);
 }
 
 .outline:hover:not(:disabled) {
-    background-color: var(--color-bg);
+    background-color: rgba(0, 0, 0, 0.03);
 }
 
 .ghost {
     background-color: transparent;
-    color: var(--color-text);
+    color: var(--color-primary);
 }
 
 .ghost:hover:not(:disabled) {
-    background-color: var(--color-bg);
+    background-color: rgba(0, 122, 255, 0.1);
 }
 
 .loading {
@@ -75,12 +79,12 @@
 
 .spinner {
     position: absolute;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
-    border-top-color: white;
-    animation: spin 1s ease-in-out infinite;
+    border-top-color: currentColor;
+    animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {

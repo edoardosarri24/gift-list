@@ -8,13 +8,15 @@ import api from '../../lib/axios';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
-import { Trash2, Copy, Check } from 'lucide-react';
+import { Trash2, Copy, Check, Pencil } from 'lucide-react';
+import { ImageUploader } from './ImageUploader';
 
 export const ManageListPage = () => {
     const { slug } = useParams<{ slug: string }>();
     const queryClient = useQueryClient();
     const [showAddForm, setShowAddForm] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [isEditingImage, setIsEditingImage] = useState(false);
 
     const { data: list, isLoading } = useQuery({
         queryKey: ['manage-list', slug],
@@ -22,6 +24,14 @@ export const ManageListPage = () => {
             const { data } = await api.get<GiftListDTO>(`/lists/${slug}/manage`);
             return data;
         },
+    });
+
+    const updateListMutation = useMutation({
+        mutationFn: (data: { imageUrl: string }) => api.put(`/lists/${slug}/manage`, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['manage-list', slug] });
+            setIsEditingImage(false);
+        }
     });
 
     const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CreateGiftItemInput>({
@@ -62,26 +72,54 @@ export const ManageListPage = () => {
                 </Link>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-                <div>
-                    <h1>{list.name}</h1>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                        <a href={`${window.location.origin}/lists/${list.slug}`} target="_blank" rel="noreferrer" style={{ color: 'gray', fontSize: '14px', textDecoration: 'none' }}>
-                            Condividi lista: {window.location.origin}/lists/{list.slug}
-                        </a>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
+                <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
+                    <div style={{ position: 'relative' }}>
+                        <div style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', border: '3px solid var(--color-surface)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', flexShrink: 0, background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {list.imageUrl ? (
+                                <img src={list.imageUrl} alt={list.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                <span style={{ color: 'var(--color-text-secondary)', fontSize: '12px' }}>Nessuna foto</span>
+                            )}
+                        </div>
                         <button
-                            onClick={handleCopy}
-                            title="Copia link"
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', padding: '4px' }}
+                            onClick={() => setIsEditingImage(!isEditingImage)}
+                            style={{ position: 'absolute', bottom: -4, right: -4, background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-text)', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
                         >
-                            {copied ? <Check size={16} /> : <Copy size={16} />}
+                            <Pencil size={14} />
                         </button>
+                    </div>
+
+                    <div>
+                        <h1 style={{ marginTop: 0 }}>{list.name}</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                            <a href={`${window.location.origin}/lists/${list.slug}`} target="_blank" rel="noreferrer" style={{ color: 'gray', fontSize: '14px', textDecoration: 'none' }}>
+                                Condividi lista: {window.location.origin}/lists/{list.slug}
+                            </a>
+                            <button
+                                onClick={handleCopy}
+                                title="Copia link"
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', padding: '4px' }}
+                            >
+                                {copied ? <Check size={16} /> : <Copy size={16} />}
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <Button onClick={() => setShowAddForm(!showAddForm)}>
                     {showAddForm ? 'Annulla' : 'Aggiungi Regalo'}
                 </Button>
             </div>
+
+            {isEditingImage && (
+                <div style={{ marginBottom: '32px' }}>
+                    <ImageUploader
+                        onSave={(imageUrl) => updateListMutation.mutate({ imageUrl })}
+                        onCancel={() => setIsEditingImage(false)}
+                        isLoading={updateListMutation.isPending}
+                    />
+                </div>
+            )}
 
             {showAddForm && (
                 <Card style={{ marginBottom: '32px' }}>

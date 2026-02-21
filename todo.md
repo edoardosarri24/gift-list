@@ -1,0 +1,7 @@
+- le mail non si mandano
+- mettere tutto nella relazione compreso lo usecase.
+- licenza github
+- gli invitati devono poter vedere solo i regali ancora disposibili ( o quelli che sono torniti disponibili) e quelli che l'invitato ha prenotato.
+- il colore dello sfondo deve essere beije come https://img.freepik.com/foto-gratuito/sfondo_53876-32173.jpg.
+- cosigli sull'app da parte degli utenti.
+- il festeggiato non deve avere il clicca facile sulla versione pubblica della lista.
