@@ -1,14 +1,14 @@
 \chapter{Deployment}
-This chapter provides an implementation-ready guide for deploying the "Gift List" application in a self-hosted environment using a Raspberry Pi 4 (4GB RAM). The strategy focuses on high reliability, security, and automated maintenance.
+This chapter provides an implementation-ready guide for deploying the "Gift List" application in a self-hosted environment using a Ugreen NAS via its native Docker application. The strategy focuses on high reliability, security of personal NAS files, and automated CI/CD maintenance via GitHub Actions.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Infrastructure Overview}
 The application is deployed as a suite of Docker containers managed by Docker Compose. This ensures environment consistency and simplifies updates.
 
 \begin{itemize}
-    \item \textbf{Host OS}: Raspberry Pi OS (64-bit) or any Debian-based distribution.
+    \item \textbf{Host OS}: Ugreen NAS OS (Linux-based) with Docker App.
     \item \textbf{Runtime}: Docker Engine + Docker Compose V2.
-    \item \textbf{Storage}: Persistent data is stored in Docker Volumes, which are mapped to the host's filesystem for easier backups.
+    \item \textbf{Storage}: Persistent data is stored in Docker Volumes. For security, only specific application data folders are mapped; the rest of the NAS filesystem is completely isolated from the containers.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -53,9 +53,7 @@ Since the Frontend is a Single Page Application (SPA) using React Router, the Ng
 \begin{verbatim}
 services:
   frontend:
-    build: 
-      context: .
-      dockerfile: ./apps/frontend/Dockerfile
+    image: ghcr.io/your_github_username/giftlist-frontend:latest
     restart: always
     environment:
       - VITE_API_BASE_URL=https://giftlist.yourdomain.com/api/v1
@@ -66,9 +64,7 @@ services:
         max-file: "3"
 
   api:
-    build:
-      context: .
-      dockerfile: ./apps/backend/Dockerfile
+    image: ghcr.io/your_github_username/giftlist-backend:latest
     restart: always
     environment:
       - DATABASE_URL=postgresql://user:pass@db:5432/giftlist
@@ -110,6 +106,14 @@ services:
       - frontend
       - api
 
+  watchtower:
+    image: containrrr/watchtower
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 300 frontend api
+    # This automatically updates the 'frontend' and 'api' images when a new version is pushed to the registry.
+
   db-backup:
     image: prodrigestivill/postgres-backup-local
     restart: always
@@ -130,7 +134,7 @@ volumes:
 To expose the application securely without opening ports on the home router, we utilize **Cloudflare Tunnels**.
 
 \subsection{Cloudflare Tunnel Integration}
-A Cloudflare Tunnel (\texttt{cloudflared}) creates a secure, encrypted connection between the Raspberry Pi and the Cloudflare edge.
+A Cloudflare Tunnel (\texttt{cloudflared}) creates a secure, encrypted connection between the Ugreen NAS and the Cloudflare edge.
 \begin{itemize}
     \item \textbf{Traffic Routing}: The tunnel is configured via the Cloudflare Dashboard to route traffic:
     \begin{itemize}
@@ -153,15 +157,24 @@ A Cloudflare Tunnel (\texttt{cloudflared}) creates a secure, encrypted connectio
 Reliability is achieved through automated recovery and off-site data preservation.
 
 \subsection{Auto-Restart}
-Docker's \texttt{restart: always} policy ensures that if a service crashes or the Raspberry Pi reboots, the entire stack restarts automatically.
+Docker's \texttt{restart: always} policy ensures that if a service crashes or the NAS reboots, the entire stack restarts automatically.
 
 \subsection{Automated Backups}
 The \texttt{db-backup} service performs a daily compressed dump at 00:00. The host machine is configured with a cron job to synchronize the \texttt{./backups} folder to an off-site location (e.g., encrypted S3 bucket).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{CI/CD Pipeline (GitHub Actions)}
+To decouple the build process from the NAS, a CI/CD pipeline is implemented using GitHub Actions.
+\begin{itemize}
+    \item \textbf{Build on Push}: Every push to the \texttt{main} branch triggers a workflow that builds the Docker images for the Frontend and API.
+    \item \textbf{Push to Registry}: The built images are automatically pushed to the GitHub Container Registry (GHCR).
+    \item \textbf{Automated Pull}: The \texttt{watchtower} service on the NAS periodically checks GHCR for new images and automatically restarts the containers with the latest version without manual intervention.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Architectural Decision Records}
 \subsection{Docker Compose vs. Kubernetes (K3s)}
-Docker Compose was selected for its minimal resource footprint (approx. 50MB RAM overhead), ensuring that the majority of the Raspberry Pi's 4GB RAM is available for PostgreSQL and the Node.js API, unlike K3s which requires significant resources for its control plane.
+Docker Compose was selected for its native integration with the Ugreen NAS Docker app and its minimal resource footprint. This ensures all NAS resources are preserved for file storage and the application itself, unlike K3s which requires significant resources for its control plane.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Monitoring and Logs}

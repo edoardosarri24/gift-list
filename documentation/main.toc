@@ -1,0 +1,84 @@
+\babel@toc {english}{}\relax 
+\contentsline {chapter}{\numberline {1}Introduction}{4}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Requirements}{5}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Internationalization (i18n)}{6}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Accessibility}{6}{section.1.3}%
+\contentsline {section}{\numberline {1.4}Licensing}{6}{section.1.4}%
+\contentsline {chapter}{\numberline {2}Backend}{8}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Technology Stack}{8}{section.2.1}%
+\contentsline {section}{\numberline {2.2}System Architecture}{8}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Database Schema (Prisma)}{9}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Configuration}{11}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}Authentication Strategy: Access \& Refresh Tokens}{11}{subsection.2.4.1}%
+\contentsline {section}{\numberline {2.5}Data Model}{12}{section.2.5}%
+\contentsline {subsection}{\numberline {2.5.1}Deletion Strategy and Data Retention}{13}{subsection.2.5.1}%
+\contentsline {subsubsection}{\nonumberline Soft Deletes}{13}{subsubsection*.4}%
+\contentsline {subsubsection}{\nonumberline Automatic Expiration (Hard Delete)}{13}{subsubsection*.5}%
+\contentsline {subsection}{\numberline {2.5.2}Data Validation Rules}{14}{subsection.2.5.2}%
+\contentsline {subsubsection}{\nonumberline Shared Schemas}{14}{subsubsection*.6}%
+\contentsline {subsubsection}{\nonumberline Entity Rules}{14}{subsubsection*.7}%
+\contentsline {subsection}{\numberline {2.5.3}Slug Generation and Collision Strategy}{15}{subsection.2.5.3}%
+\contentsline {section}{\numberline {2.6}API Design}{15}{section.2.6}%
+\contentsline {subsection}{\numberline {2.6.1}Architectural Choice}{15}{subsection.2.6.1}%
+\contentsline {subsection}{\numberline {2.6.2}Error Handling}{15}{subsection.2.6.2}%
+\contentsline {subsubsection}{\nonumberline Detailed Error Codes}{16}{subsubsection*.8}%
+\contentsline {subsubsection}{\nonumberline Common Status Codes}{16}{subsubsection*.9}%
+\contentsline {subsection}{\numberline {2.6.3}Authentication and Public Routes}{16}{subsection.2.6.3}%
+\contentsline {subsection}{\numberline {2.6.4}Protected Routes (Celebrant Dashboard)}{17}{subsection.2.6.4}%
+\contentsline {subsection}{\numberline {2.6.5}Slug Generation and Collision Strategy}{18}{subsection.2.6.5}%
+\contentsline {section}{\numberline {2.7}API Specification (DTOs)}{18}{section.2.7}%
+\contentsline {subsection}{\numberline {2.7.1}Authentication}{18}{subsection.2.7.1}%
+\contentsline {subsection}{\numberline {2.7.2}Gift Lists}{19}{subsection.2.7.2}%
+\contentsline {subsection}{\numberline {2.7.3}Error Response Example}{20}{subsection.2.7.3}%
+\contentsline {section}{\numberline {2.8}Security}{20}{section.2.8}%
+\contentsline {subsection}{\numberline {2.8.1}Rate Limiting}{20}{subsection.2.8.1}%
+\contentsline {subsection}{\numberline {2.8.2}CORS Policy}{20}{subsection.2.8.2}%
+\contentsline {section}{\numberline {2.9}Handling Concurrency}{20}{section.2.9}%
+\contentsline {section}{\numberline {2.10}Notification Service}{20}{section.2.10}%
+\contentsline {section}{\numberline {2.11}Email Templates}{21}{section.2.11}%
+\contentsline {subsection}{\numberline {2.11.1}Item Removal Notification (Guest)}{21}{subsection.2.11.1}%
+\contentsline {subsection}{\numberline {2.11.2}Password Reset (Celebrant)}{21}{subsection.2.11.2}%
+\contentsline {chapter}{\numberline {3}Frontend}{23}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Technology Stack}{23}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Form \& Validation Strategy}{24}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Image Uploading and Processing}{24}{section.3.3}%
+\contentsline {section}{\numberline {3.4}API Interaction}{25}{section.3.4}%
+\contentsline {section}{\numberline {3.5}Internationalization (i18n)}{25}{section.3.5}%
+\contentsline {section}{\numberline {3.6}Browser Compatibility}{26}{section.3.6}%
+\contentsline {subsection}{\numberline {3.6.1}Unsupported Browsers Policy}{26}{subsection.3.6.1}%
+\contentsline {section}{\numberline {3.7}Architectural Decision Records}{26}{section.3.7}%
+\contentsline {subsection}{\numberline {3.7.1}Why React?}{26}{subsection.3.7.1}%
+\contentsline {subsection}{\numberline {3.7.2}Comparison with Alternatives}{27}{subsection.3.7.2}%
+\contentsline {subsubsection}{\nonumberline React vs. Flutter (Dart)}{27}{subsubsection*.10}%
+\contentsline {subsubsection}{\nonumberline React vs. Angular}{27}{subsubsection*.11}%
+\contentsline {section}{\numberline {3.8}Project Structure}{27}{section.3.8}%
+\contentsline {subsection}{\numberline {3.8.1}Frontend Internal Structure}{28}{subsection.3.8.1}%
+\contentsline {section}{\numberline {3.9}Future Mobile Strategy}{28}{section.3.9}%
+\contentsline {section}{\numberline {3.10}Implementation Details}{28}{section.3.10}%
+\contentsline {subsection}{\numberline {3.10.1}Routing Strategy}{28}{subsection.3.10.1}%
+\contentsline {subsection}{\numberline {3.10.2}Component Architecture}{29}{subsection.3.10.2}%
+\contentsline {subsubsection}{\nonumberline Error Boundaries}{29}{subsubsection*.12}%
+\contentsline {subsubsection}{\nonumberline GiftCard Component}{29}{subsubsection*.13}%
+\contentsline {subsubsection}{\nonumberline ClaimButton Component}{30}{subsubsection*.14}%
+\contentsline {subsection}{\numberline {3.10.3}Global Styling Strategy}{30}{subsection.3.10.3}%
+\contentsline {subsection}{\numberline {3.10.4}Feedback Mechanisms}{30}{subsection.3.10.4}%
+\contentsline {section}{\numberline {3.11}Testing Strategy}{31}{section.3.11}%
+\contentsline {section}{\numberline {3.12}Guest Session Management}{31}{section.3.12}%
+\contentsline {chapter}{\numberline {4}Deployment}{32}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Infrastructure Overview}{32}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Containerization Strategy}{32}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Service Definition}{32}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}Database Migrations}{32}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Nginx Configuration for SPA}{33}{subsection.4.2.3}%
+\contentsline {subsection}{\numberline {4.2.4}Docker Compose Configuration (Implementation Ready)}{33}{subsection.4.2.4}%
+\contentsline {section}{\numberline {4.3}Networking and Security}{35}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Cloudflare Tunnel Integration}{35}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Security Hardening}{36}{subsection.4.3.2}%
+\contentsline {section}{\numberline {4.4}Reliability and Backup Strategy}{36}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}Auto-Restart}{36}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}Automated Backups}{36}{subsection.4.4.2}%
+\contentsline {section}{\numberline {4.5}CI/CD Pipeline (GitHub Actions)}{36}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Architectural Decision Records}{37}{section.4.6}%
+\contentsline {subsection}{\numberline {4.6.1}Docker Compose vs. Kubernetes (K3s)}{37}{subsection.4.6.1}%
+\contentsline {section}{\numberline {4.7}Monitoring and Logs}{37}{section.4.7}%
+\providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 
