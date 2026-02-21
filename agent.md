@@ -28,11 +28,13 @@ To balance safety and velocity, distinguish between these two types of actions:
 * **English Only:** All code and technical identifiers must be in English.
 * **Semantic Comments:** Explain the *logic* and *business reason* (the "why"), not the syntax. Code should be clean and self-explanatory.
 
-## 3. Technical Hints
+## 3. Technical & Environment Hints
 * **LaTeX Handling:** Ensure valid syntax. Respect the project structure (`main.tex`, `src/`, etc.). Use `% LOGIC:` for semantic comments in LaTeX.
+* **Containerization (MANDATORY):** Do **NOT** install any dependencies (databases, runtimes, libraries) directly on the host system. 
+* **Docker First:** All components must be containerized. Use `Dockerfile` and `docker-compose.yaml` for managing the environment.
 * **Context Awareness:** Always scan `documentation/**` before proposing any change to ensure consistency with the existing architecture.
 
 ## 4. Cross-Cutting Concerns (Always Consider)
 * **Security:** Data protection, Auth/Authz, and input validation by design.
 * **Logging:** Structured and meaningful logs for debugging and auditing.
-* **Deployment:** Keep configuration separate from code; ensure the process is repeatable.
+* **Deployment:** Keep configuration separate from code; ensure the process is repeatable and environment-agnostic via Docker.

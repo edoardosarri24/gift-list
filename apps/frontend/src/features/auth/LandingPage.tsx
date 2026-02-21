@@ -15,7 +15,7 @@ export const LandingPage = () => {
     return (
         <div className={styles.landing}>
             <h1 className={styles.title}>Gift List</h1>
-            <p className={styles.subtitle}>Curate your perfect wish list and share it easily, keeping the element of surprise.</p>
+            <p className={styles.subtitle}>Crea la tua lista dei desideri perfetta e condividila facilmente, mantenendo l'effetto sorpresa.</p>
 
             {isLogin ? (
                 <LoginForm onToggle={() => setIsLogin(false)} />

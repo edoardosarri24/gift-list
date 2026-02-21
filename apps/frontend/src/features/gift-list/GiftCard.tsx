@@ -24,14 +24,14 @@ export const GiftCard: FC<GiftCardProps> = ({ item, onClaim, onUnclaim, isLoadin
                 <div style={{ flex: 1 }}>
                     <h4 style={{ margin: 0 }}>
                         {item.name}
-                        {isClaimedByMe && <span style={{ marginLeft: '8px', fontSize: '12px', color: 'var(--color-primary)', fontWeight: 'bold' }}>Claimed by You</span>}
-                        {isClaimedByOther && <span style={{ marginLeft: '8px', fontSize: '12px', color: 'gray' }}>Already Claimed</span>}
+                        {isClaimedByMe && <span style={{ marginLeft: '8px', fontSize: '12px', color: 'var(--color-primary)', fontWeight: 'bold' }}>Prenotato da te</span>}
+                        {isClaimedByOther && <span style={{ marginLeft: '8px', fontSize: '12px', color: 'gray' }}>Già prenotato</span>}
                     </h4>
                     {item.description && <p style={{ fontSize: '14px', marginTop: '8px', color: 'var(--color-text)' }}>{item.description}</p>}
                     {item.url && (
                         <div style={{ marginTop: '8px' }}>
                             <a href={item.url} target="_blank" rel="noreferrer" style={{ fontSize: '14px', color: 'var(--color-primary)', textDecoration: 'none' }}>
-                                View Link
+                                Vedi Link
                             </a>
                         </div>
                     )}
@@ -40,17 +40,17 @@ export const GiftCard: FC<GiftCardProps> = ({ item, onClaim, onUnclaim, isLoadin
                 <div style={{ marginLeft: '16px' }}>
                     {isAvailable && (
                         <Button onClick={() => onClaim(item.id)} isLoading={isLoading} size="sm">
-                            Claim Gift
+                            Prenota Regalo
                         </Button>
                     )}
                     {isClaimedByMe && (
                         <Button variant="outline" onClick={() => onUnclaim(item.id)} isLoading={isLoading} size="sm">
-                            Unclaim
+                            Annulla Prenotazione
                         </Button>
                     )}
                     {isClaimedByOther && (
                         <Button disabled variant="ghost" size="sm">
-                            Unavailable
+                            Non Disponibile
                         </Button>
                     )}
                 </div>

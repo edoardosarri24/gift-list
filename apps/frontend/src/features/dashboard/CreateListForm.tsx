@@ -30,25 +30,25 @@ export const CreateListForm = () => {
         <div style={{ maxWidth: '600px', margin: '48px auto', padding: '0 24px' }}>
             <div style={{ marginBottom: '24px' }}>
                 <Link to="/dashboard" style={{ textDecoration: 'none', color: 'var(--color-primary)' }}>
-                    ← Back to Dashboard
+                    ← Torna alla Dashboard
                 </Link>
             </div>
             <Card>
-                <h2>Create a New Gift List</h2>
-                <p style={{ color: 'gray', marginBottom: '24px' }}>Give your list a name (e.g., "My 30th Birthday", "Wedding Registry")</p>
+                <h2>Crea una Nuova Lista Regali</h2>
+                <p style={{ color: 'gray', marginBottom: '24px' }}>Dai un nome alla tua lista (es. "Il mio 30° Compleanno", "Lista Nozze")</p>
 
                 {error && <div style={{ color: 'red', marginBottom: '16px' }}>{error}</div>}
 
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <Input
-                        label="List Name"
-                        placeholder="e.g. My Awesome Birthday"
+                        label="Nome Lista"
+                        placeholder="es. Il mio fantastico compleanno"
                         {...register('name')}
                         error={errors.name?.message}
                     />
                     <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
                         <Button type="submit" isLoading={isSubmitting}>
-                            Create List
+                            Crea Lista
                         </Button>
                     </div>
                 </form>

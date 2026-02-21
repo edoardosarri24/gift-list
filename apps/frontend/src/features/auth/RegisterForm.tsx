@@ -50,14 +50,14 @@ export const RegisterForm = ({ onToggle }: { onToggle: () => void }) => {
     return (
         <div className={styles.formContainer}>
             <Card>
-                <h2 style={{ marginBottom: '24px', textAlign: 'center' }}>Create Account</h2>
+                <h2 style={{ marginBottom: '24px', textAlign: 'center' }}>Crea Account</h2>
                 {serverError && <div className={styles.serverError}>{serverError}</div>}
 
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <Input
                         label="Email"
                         type="email"
-                        placeholder="celebrant@example.com"
+                        placeholder="festeggiato@esempio.com"
                         {...register('email')}
                         error={errors.email?.message}
                     />
@@ -70,13 +70,13 @@ export const RegisterForm = ({ onToggle }: { onToggle: () => void }) => {
                     />
 
                     <Button type="submit" isLoading={isSubmitting} style={{ width: '100%' }}>
-                        Sign Up
+                        Registrati
                     </Button>
                 </form>
 
                 <div className={styles.toggle}>
-                    Already have an account?
-                    <button className={styles.toggleLink} onClick={onToggle}>Sign in</button>
+                    Hai già un account?
+                    <button className={styles.toggleLink} onClick={onToggle}>Accedi</button>
                 </div>
             </Card>
         </div>

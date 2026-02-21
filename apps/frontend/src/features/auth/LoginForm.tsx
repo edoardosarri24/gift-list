@@ -48,14 +48,14 @@ export const LoginForm = ({ onToggle }: { onToggle: () => void }) => {
     return (
         <div className={styles.formContainer}>
             <Card>
-                <h2 style={{ marginBottom: '24px', textAlign: 'center' }}>Welcome Back</h2>
+                <h2 style={{ marginBottom: '24px', textAlign: 'center' }}>Bentornato</h2>
                 {serverError && <div className={styles.serverError}>{serverError}</div>}
 
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <Input
                         label="Email"
                         type="email"
-                        placeholder="celebrant@example.com"
+                        placeholder="festeggiato@esempio.com"
                         {...register('email')}
                         error={errors.email?.message}
                     />
@@ -68,13 +68,13 @@ export const LoginForm = ({ onToggle }: { onToggle: () => void }) => {
                     />
 
                     <Button type="submit" isLoading={isSubmitting} style={{ width: '100%' }}>
-                        Sign In
+                        Accedi
                     </Button>
                 </form>
 
                 <div className={styles.toggle}>
-                    Don't have an account?
-                    <button className={styles.toggleLink} onClick={onToggle}>Create one</button>
+                    Non hai un account?
+                    <button className={styles.toggleLink} onClick={onToggle}>Creane uno</button>
                 </div>
             </Card>
         </div>
