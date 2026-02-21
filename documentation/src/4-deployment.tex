@@ -9,6 +9,7 @@ The application is deployed as a suite of Docker containers managed by Docker Co
     \item \textbf{Host OS}: Ugreen NAS OS (Linux-based) with Docker App.
     \item \textbf{Runtime}: Docker Engine + Docker Compose V2.
     \item \textbf{Storage}: Persistent data is stored in Docker Volumes. For security, only specific application data folders are mapped; the rest of the NAS filesystem is completely isolated from the containers.
+    \item \textbf{Persistency}: The PostgreSQL data is written directly into the \texttt{NAS\_DATABASE\_DATA} Docker volume. This ensures that even if the container is destroyed or restarted, the data persists, and rebuilding the application does not cause data loss.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -24,10 +25,10 @@ The system consists of several specialized services orchestrated via \texttt{doc
     \item \textbf{Backup Agent}: A lightweight container that performs scheduled database dumps.
 \end{enumerate}
 
-\subsection{Database Migrations}
-To ensure the database schema is up-to-date before the application starts, the API service is configured to run migrations on startup.
+\subsection{Database Schema Initialization}
+To ensure the database schema is up-to-date and directly applied to the empty database on the NAS before the application starts, the API service is configured to synchronize on startup.
 \begin{itemize}
-    \item \textbf{Entrypoint Command}: The Docker definition for the \texttt{api} service overrides the default command to execute \texttt{npx prisma migrate deploy} before starting the server. This guarantees that all pending migrations are applied to the production database automatically.
+    \item \textbf{Entrypoint Command}: The Docker definition for the \texttt{api} service overrides the default command to execute \texttt{npx prisma db push} before starting the server. This guarantees that the table structure correctly matches the codebase upon the first launch and skips the need to export local migration files to the container. The command safely ignores non-destructive changes, retaining all data during re-deployments.
 \end{itemize}
 
 \subsection{Nginx Configuration for SPA}
@@ -53,7 +54,7 @@ Since the Frontend is a Single Page Application (SPA) using React Router, the Ng
 \begin{verbatim}
 services:
   frontend:
-    image: ghcr.io/your_github_username/giftlist-frontend:latest
+    image: ghcr.io/your_github_username/gift-list-frontend:main
     restart: always
     environment:
       - VITE_API_BASE_URL=https://giftlist.yourdomain.com/api/v1
@@ -64,7 +65,7 @@ services:
         max-file: "3"
 
   api:
-    image: ghcr.io/your_github_username/giftlist-backend:latest
+    image: ghcr.io/your_github_username/gift-list-backend:main
     restart: always
     environment:
       - DATABASE_URL=postgresql://user:pass@db:5432/giftlist
@@ -101,7 +102,9 @@ services:
   tunnel:
     image: cloudflare/cloudflared:latest
     restart: always
-    command: tunnel run --token ${CLOUDFLARE_TOKEN}
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=your_cloudflare_tunnel_token
     depends_on:
       - frontend
       - api
@@ -149,7 +152,7 @@ A Cloudflare Tunnel (\texttt{cloudflared}) creates a secure, encrypted connectio
 \begin{itemize}
     \item \textbf{Internal Networking}: Only the Frontend and API services are indirectly exposed via the tunnel. The Database is only accessible within the internal Docker network.
     \item \textbf{Log Rotation}: Configured globally in the Compose file to prevent the SD card from filling up (max 3 files of 10MB each per service).
-    \item \textbf{Environment Secrets}: Sensitive data (DB passwords, Cloudflare tokens) are managed via a \texttt{.env} file.
+    \item \textbf{Environment Secrets}: For simplicity and maximum compatibility with NAS Graphic Interfaces (which sometimes ignore hidden files like \texttt{.env}), sensitive parameters (DB passwords, Cloudflare tokens) are bundled directly inside the \texttt{docker-compose.yml} configuration in a single source of truth.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
