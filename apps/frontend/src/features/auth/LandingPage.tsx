@@ -69,7 +69,8 @@ export const LandingPage = () => {
             </Helmet>
             
             <LanguageToggle absolute />
-            <h1 className={styles.title}>{t('landingTitle')}</h1>
+            <h1 className={styles.brand}>{t('landingBrand')}</h1>
+            <h2 className={styles.tagline}>{t('landingTagline')}</h2>
             <p className={styles.subtitle}>{t('landingSubtitle')}</p>
 
             {isLogin ? (

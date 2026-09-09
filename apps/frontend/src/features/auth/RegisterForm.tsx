@@ -97,7 +97,7 @@ export const RegisterForm = ({ onToggle }: { onToggle: () => void }) => {
                     </div>
                 ) : (
                     <>
-                        <form action="#" onSubmit={handleSubmit(onSubmit)} autoComplete="on">
+                        <form id="register-form" name="register" onSubmit={handleSubmit(onSubmit)} autoComplete="on">
                     <Input
                         id="register-email"
                         label={t('emailLabel')}

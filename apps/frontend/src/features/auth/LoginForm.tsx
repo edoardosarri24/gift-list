@@ -103,7 +103,7 @@ export const LoginForm = ({ onToggle }: { onToggle: () => void }) => {
                     </div>
                 )}
 
-                <form action="#" onSubmit={handleSubmit(onSubmit)} autoComplete="on">
+                <form id="login-form" name="login" onSubmit={handleSubmit(onSubmit)} autoComplete="on">
                     <Input
                         id="login-email"
                         label={t('emailLabel')}
